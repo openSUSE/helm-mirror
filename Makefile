@@ -52,7 +52,7 @@ install: $(GO_SRC)
 install.static: $(GO_SRC)
 	$(GO) install -v ${STATIC_BUILD_FLAGS} ${CMD}
 
-install.plugin: build
+install.plugin: mirror
 	mkdir -p $(HELM_HOME_MIRROR_BIN)
 	cp bin/mirror $(HELM_HOME_MIRROR_BIN)
 	cp plugin.yaml $(HELM_HOME_MIRROR)/
@@ -113,7 +113,6 @@ test: local-validate-go
 
 cover:
 	bash <cover.sh
-	$(GO) tool cover -func=cover.out
 
 bootstrap:
 	dep ensure
