@@ -1,0 +1,10 @@
+kube:
+  external_ips: []
+  storage_class:
+    persistent: "persistent"
+    shared: "shared"
+  registry:
+    hostname: "beta.opensuse.com"
+    username: ""
+    password: ""
+  organization: "alpha"
