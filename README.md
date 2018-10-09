@@ -1,5 +1,10 @@
 # Helm Mirror Plugin
 
+[![Release](https://img.shields.io/github/release/openSUSE/helm-mirror.svg)](https://github.com/openSUSE/helm-mirror/releases/latest)
+[![Build Status](https://img.shields.io/travis/openSUSE/helm-mirror/master.svg)](https://travis-ci.org/openSUSE/helm-mirror)
+![License: Apache 2.0](https://img.shields.io/github/license/openSUSE/helm-mirror.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/openSUSE/helm-mirror)](https://goreportcard.com/report/github.com/openSUSE/helm-mirror)
+
 Helm plugin used to mirror repositories
 
 ## Usage

@@ -2,8 +2,8 @@
 
 set -e
 workdir=.cover
-profile="cover.out"
-mode=count
+profile="coverage.txt"
+mode=atomic
 
 rm -rf "$workdir"
 mkdir "$workdir"
