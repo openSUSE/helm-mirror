@@ -30,19 +30,17 @@ import (
 
 var (
 	//Verbose defines if the command is being run with verbose mode
-	Verbose bool
-	//IgnoreErrors ignores errors in processing charts
-	IgnoreErrors bool
-	folder       string
-	repoURL      *url.URL
-	flags        = log.Ldate | log.Lmicroseconds | log.Lshortfile
-	prefix       = "helm-mirror: "
-	logger       *log.Logger
-	username     string
-	password     string
-	caFile       string
-	certFile     string
-	keyFile      string
+	Verbose  bool
+	folder   string
+	repoURL  *url.URL
+	flags    = log.Ldate | log.Lmicroseconds | log.Lshortfile
+	prefix   = "helm-mirror: "
+	logger   *log.Logger
+	username string
+	password string
+	caFile   string
+	certFile string
+	keyFile  string
 )
 
 const rootDesc = `Mirror Helm Charts from an index file into a local folder.
@@ -104,7 +102,7 @@ func Execute() {
 func init() {
 	logger = log.New(os.Stdout, prefix, flags)
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
-	rootCmd.PersistentFlags().BoolVarP(&IgnoreErrors, "ignore-errors", "i", false, "ignores errors whiles processing charts. (Exit Code: 2)")
+
 	rootCmd.Flags().StringVar(&username, "username", "", "chart repository username")
 	rootCmd.Flags().StringVar(&password, "password", "", "chart repository password")
 	rootCmd.Flags().StringVar(&caFile, "ca-file", "", "verify certificates of HTTPS-enabled servers using this CA bundle")

@@ -1,6 +1,6 @@
 FROM opensuse/amd64:42.3
 
-LABEL Maintainer="Vicente Zepeda <vzepedamas@suse.com>"
+LABEL Maintainer="SUSE Containers Team <containers@suse.com>"
 
 RUN zypper -n up
 RUN zypper -n in \

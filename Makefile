@@ -63,7 +63,7 @@ clean:
 
 local-validate: local-validate-git local-validate-go local-validate-reproducible local-validate-build
 
-EPOCH_COMMIT ?= a6743dd3e491959b4d270643525b3dae5a2a0278
+EPOCH_COMMIT ?= 9ef2a655b2b071a3319892f9b249e2e8160eca10
 local-validate-git:
 	@type git-validation > /dev/null 2>/dev/null || (echo "ERROR: git-validation not found." && false)
 ifdef TRAVIS_COMMIT_RANGE
@@ -109,7 +109,7 @@ test.unit: mirrorimage
 
 test: local-validate-go
 	rm -rf /tmp/mirror
-	go test -v ./...
+	$(GO) test -v ./...
 
 cover:
 	bash <cover.sh
@@ -137,6 +137,14 @@ endif
 	git push
 	github-release openSUSE/helm-mirror v$(VERSION) master "v$(VERSION)" "release/*"
 
+MANPAGES_MD := $(wildcard doc/man/*.md)
+MANPAGES    := $(MANPAGES_MD:%.md=%)
+
+doc/man/%.1: doc/man/%.1.md
+	$(GO_MD2MAN) -in $< -out $@
+
+doc: $(MANPAGES)
+
 .PHONY: mirror \
 	mirror.static \
 	install \
@@ -154,4 +162,5 @@ endif
 	cover \
 	bootstrap \
 	dist \
-	release
+	release \
+	doc
