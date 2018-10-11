@@ -2,10 +2,12 @@
 
 [![Release](https://img.shields.io/github/release/openSUSE/helm-mirror.svg)](https://github.com/openSUSE/helm-mirror/releases/latest)
 [![Build Status](https://img.shields.io/travis/openSUSE/helm-mirror/master.svg)](https://travis-ci.org/openSUSE/helm-mirror)
+[![codecov](https://codecov.io/gh/openSUSE/helm-mirror/branch/master/graph/badge.svg)](https://codecov.io/gh/openSUSE/helm-mirror)
+
 ![License: Apache 2.0](https://img.shields.io/github/license/openSUSE/helm-mirror.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/openSUSE/helm-mirror)](https://goreportcard.com/report/github.com/openSUSE/helm-mirror)
 
-Helm plugin used to mirror repositories
+Helm plugin used to mirror Chart repositories
 
 ## Usage
 
@@ -68,7 +70,6 @@ Flags:
       --ca-file string     verify certificates of HTTPS-enabled servers using this CA bundle
       --cert-file string   identify HTTPS client using this SSL certificate file
   -h, --help               help for mirror
-  -i, --ignore-errors      ignores errors whiles processing charts. (Exit Code: 2)
       --key-file string    identify HTTPS client using this SSL key file
       --password string    chart repository password
       --username string    chart repository username
@@ -100,6 +101,8 @@ The [folder|tgzfile] has to be a full path.
 
   -h, --help               help for inspect-images
 
+  -i, --ignore-errors      ignores errors whiles processing charts. (Exit Code: 2)
+
   --file-name string   set the name of the output file. (default "images.out")
 
 ```shell
@@ -125,7 +128,6 @@ helm mirror inspect-images /tmp/helm -o yaml
 
 #### Global Flags
 
-  -i, --ignore-errors   ignores errors whiles processing charts. (Exit Code: 2)
   -v, --verbose         verbose output
 
 ### version
@@ -156,13 +158,13 @@ Get all dependencies running:
 
 `dep ensure`
 
-### Runing tests
+### Running tests
 
 To run test on this package simply run:
 
 `make test`
 
-#### Testign with Docker
+#### Testing with Docker
 
 `make test.unit`
 
