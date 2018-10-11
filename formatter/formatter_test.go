@@ -23,6 +23,7 @@ func TestNewFormatter(t *testing.T) {
 		{"3", args{t: JSONType}, &json{l: fakeLogger}},
 		{"4", args{t: YamlType}, &yaml{l: fakeLogger}},
 		{"5", args{t: 33}, &stdout{l: fakeLogger}},
+		{"6", args{t: SkopeoType}, &skopeo{l: fakeLogger}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -26,6 +26,14 @@
 
 
 [[constraint]]
+  branch = "master"
+  name = "github.com/containers/image"
+
+[[constraint]]
+  name = "github.com/docker/distribution"
+  version = "2.7.0-rc.0"
+
+[[constraint]]
   name = "github.com/pkg/errors"
   version = "0.8.0"
 

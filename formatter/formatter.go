@@ -20,6 +20,7 @@ const (
 	FileType
 	JSONType
 	YamlType
+	SkopeoType
 )
 
 //NewFormatter returns a new instance of formatter
@@ -33,6 +34,8 @@ func NewFormatter(t Type, fileName string, logger *log.Logger) Formatter {
 		return newJSONFormatter(fileName, logger)
 	case YamlType:
 		return newYamlFormatter(fileName, logger)
+	case SkopeoType:
+		return newSkopeoFormatter(fileName, logger)
 	default:
 		return newStdoutFormatter(logger)
 	}

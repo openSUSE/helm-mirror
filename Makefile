@@ -61,7 +61,7 @@ clean:
 	rm -rf ./bin
 	rm -f $(MANPAGES)
 
-local-validate: local-validate-git local-validate-go local-validate-reproducible local-validate-build
+local-validate: local-validate-git local-validate-go local-validate-reproducible
 
 EPOCH_COMMIT ?= 9ef2a655b2b071a3319892f9b249e2e8160eca10
 local-validate-git:
