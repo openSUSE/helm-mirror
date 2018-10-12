@@ -105,7 +105,7 @@ mirrorimage:
 
 
 test.unit: mirrorimage
-	$(DOCKER_RUN) $(MIRROR_IMAGE) make bootstrap test
+	$(DOCKER_RUN) $(MIRROR_IMAGE) make test
 
 test: local-validate-go
 	rm -rf /tmp/mirror

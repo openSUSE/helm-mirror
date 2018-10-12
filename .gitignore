@@ -1,6 +1,5 @@
 helm-mirror
 mirror
-/vendor
 log-*
 images
 .vscode
