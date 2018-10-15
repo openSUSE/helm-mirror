@@ -51,6 +51,8 @@ const outputDesc = `choose an output for the list of images. Options:
 - file: outputs all images to a file. (View file-name flag)
 - json: outputs all images to a file in JSON format. (View file-name flag)
 - yaml: outputs all images to a file in YAML format. (View file-name flag)
+- skopeo: outputs all images to a file in YAML format to be used as input
+  to Skopeo Sync. (View file-name flag)
 
 Usage:
 
@@ -99,10 +101,11 @@ func validateInspectImagesArgs(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func resolveFormatter(output string, fileName string, l *log.Logger) formatter.Formatter {
+func resolveFormatter(output string, fileName string, l *log.Logger) (formatter.Formatter, error) {
 	imagesFile, err := filepath.Abs(fileName)
 	if err != nil {
 		l.Print("error: geting working directory")
+		return nil, err
 	}
 	var t formatter.Type
 	switch output {
@@ -112,17 +115,22 @@ func resolveFormatter(output string, fileName string, l *log.Logger) formatter.F
 		t = formatter.YamlType
 	case "json":
 		t = formatter.JSONType
+	case "skopeo":
+		t = formatter.SkopeoType
 	default:
 		t = formatter.StdoutType
 	}
-	return formatter.NewFormatter(t, imagesFile, l)
+	return formatter.NewFormatter(t, imagesFile, l), nil
 }
 
 func runInspectImages(cmd *cobra.Command, args []string) error {
 	target = args[0]
-	formatter := resolveFormatter(output, imagesFile, logger)
+	formatter, err := resolveFormatter(output, imagesFile, logger)
+	if err != nil {
+		return err
+	}
 	imagesService := service.NewImagesService(target, Verbose, IgnoreErrors, formatter, logger)
-	err := imagesService.Images()
+	err = imagesService.Images()
 	if err != nil {
 		return err
 	}

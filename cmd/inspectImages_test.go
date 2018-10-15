@@ -53,10 +53,11 @@ func Test_resolveFormatter(t *testing.T) {
 		{"3", args{"yaml", "/test", fakeLog}, formatter.NewFormatter(formatter.YamlType, "/test", fakeLog)},
 		{"4", args{"json", "/test", fakeLog}, formatter.NewFormatter(formatter.JSONType, "/test", fakeLog)},
 		{"5", args{"notexists", "test", fakeLog}, formatter.NewFormatter(formatter.StdoutType, "test", fakeLog)},
+		{"6", args{"skopeo", "/test", fakeLog}, formatter.NewFormatter(formatter.SkopeoType, "/test", fakeLog)},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := resolveFormatter(tt.args.output, tt.args.fileName, tt.args.l); !reflect.DeepEqual(got, tt.want) {
+			if got, _ := resolveFormatter(tt.args.output, tt.args.fileName, tt.args.l); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("resolveFormatter() = %v, want %v", got, tt.want)
 			}
 		})

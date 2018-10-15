@@ -117,6 +117,8 @@ helm mirror inspect-images /tmp/helm -o yaml --file-name images.yaml
 - file: outputs all images to a file. (View file-name flag)
 - json: outputs all images to a file in JSON format. (View file-name flag)
 - yaml: outputs all images to a file in YAML format. (View file-name flag)
+- skopeo: skopeo: outputs all images to a file in YAML format to be used as input
+  to Skopeo Sync. (View file-name flag) [1]
 
 ```shell
 helm mirror inspect-images /tmp/helm --output stdout
@@ -175,3 +177,5 @@ Be sure you have all prerequisites, then build the binary by simply running
 `make mirror`
 
 your binary will be stored under `bin` folder
+
+[1]: https://github.com/SUSE/skopeo/blob/sync/docs/skopeo.1.md#skopeo-sync

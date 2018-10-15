@@ -34,7 +34,7 @@ option.
   Sets the name of the output file.
 
 **-o, --output**
-  Choose an output for the list of images. (**stdout**|json|yaml|file)
+  Choose an output for the list of images. (**stdout**|json|yaml|file|skopeo[1])
 
 # EXAMPLES
 The following examples show different ways to interact with **mirror inspect-images**
@@ -69,4 +69,4 @@ errors are usually for missing required values in the charts.
 **mirror-help**(1),
 **mirror-version**(1)
 
-[1]: https://docs.helm.sh
+[1]: https://github.com/SUSE/skopeo/blob/sync/docs/skopeo.1.md#skopeo-sync
