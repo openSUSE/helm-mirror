@@ -68,7 +68,7 @@ verifySupported() {
 getDownloadURL() {
   local version=$(git -C $HELM_PLUGIN_PATH describe --tags --exact-match 2>/dev/null)
   if [ -n "$version" ]; then
-    DOWNLOAD_URL="https://github.com/$PROJECT_GH/releases/download/$version/helm-mirror-$OS.tgz"
+    DOWNLOAD_URL="https://codeload.github.com/$PROJECT_GH/tar.gz/$version"
   else
     # Use the GitHub API to find the download url for this project.
     local url="https://api.github.com/repos/$PROJECT_GH/releases/latest"
@@ -97,11 +97,14 @@ downloadFile() {
 installFile() {
   HELM_TMP="/tmp/$PROJECT_NAME"
   mkdir -p "$HELM_TMP"
-  tar xf "$PLUGIN_TMP_FILE" -C "$HELM_TMP"
-  HELM_TMP_BIN="$HELM_TMP/mirror/bin/mirror"
+  tar xf "$PLUGIN_TMP_FILE" -C "$HELM_TMP" --strip-components=1
+  HELM_TMP_BIN="$HELM_TMP/bin/mirror"
   echo "Preparing to install into ${HELM_PLUGIN_PATH}"
   mkdir -p "$HELM_PLUGIN_PATH/bin"
+  pushd "$HELM_TMP"
+  make mirror
   cp "$HELM_TMP_BIN" "$HELM_PLUGIN_PATH/bin"
+  popd
 }
 
 # fail_trap is executed if an error occurs.
@@ -109,7 +112,7 @@ fail_trap() {
   result=$?
   if [ "$result" != "0" ]; then
     echo "Failed to install $PROJECT_NAME"
-    echo "\tFor support, go to https://github.com/openSUSE/helm-mirror."
+    echo "For support, go to https://github.com/openSUSE/helm-mirror."
   fi
   exit $result
 }
