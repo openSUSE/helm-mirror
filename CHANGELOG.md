@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.1.0
+
 ### Added
 
 - `mirror [chart-repo] [target-folder]` this command takes a chart repository and downloads all
@@ -26,4 +28,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - CI steps with [Travis CI](https://travis-ci.org) and Code Coverage with [CodeCov](https://codecov.io)
 
-[Unreleased]: https://github.com/openSUSE/helm-mirror/compare/HEAD...HEAD
+[Unreleased]: https://github.com/openSUSE/helm-mirror/compare/v0.1.0...HEAD
