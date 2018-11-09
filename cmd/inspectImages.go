@@ -19,17 +19,16 @@ import (
 	"log"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/openSUSE/helm-mirror/formatter"
 	"github.com/openSUSE/helm-mirror/service"
-
 	"github.com/spf13/cobra"
 )
 
 var (
 	//IgnoreErrors ignores errors in processing charts
 	IgnoreErrors bool
-	imagesFile   string
 	output       string
 	target       string
 )
@@ -45,38 +44,34 @@ the images on 'stdout' by default, for more options check
 The [folder|tgzfile] has to be a full path.
 `
 
-const outputDesc = `choose an output for the list of images. Options:
+const outputDesc = `choose an output for the list of images and specify
+the file name, if not specified 'images.out' will be the default.
+Options:
 
-- stdout: prints all images on stdout
-- file: outputs all images to a file. (View file-name flag)
-- json: outputs all images to a file in JSON format. (View file-name flag)
-- yaml: outputs all images to a file in YAML format. (View file-name flag)
-- skopeo: outputs all images to a file in YAML format to be used as input
-  to Skopeo Sync. (View file-name flag)
+- file: outputs all images to a file
+- json: outputs all images to a file in JSON format
+- skopeo: outputs all images to a file in YAML format
+  to be used as source file with the 'skopeo sync' command.
+  For more information refer to the 'skopeo sync'
+  documentation at https://github.com/SUSE/skopeo/blob/sync/docs/skopeo.1.md#skopeo-sync
+- stdout: prints all images to standard output
+- yaml: outputs all images to a file in YAML format
 
 Usage:
 
 	- helm mirror inspect-images /tmp/helm --output stdout
 	- helm mirror inspect-images /tmp/helm -o stdout
-	- helm mirror inspect-images /tmp/helm -o file
-	- helm mirror inspect-images /tmp/helm -o json
-	- helm mirror inspect-images /tmp/helm -o yaml
+	- helm mirror inspect-images /tmp/helm -o file=filename
+	- helm mirror inspect-images /tmp/helm -o json=filename.json
+	- helm mirror inspect-images /tmp/helm -o yaml=filename.yaml
+	- helm mirror inspect-images /tmp/helm -o skopeo=filename.yaml
 
-`
-
-const fileNameDesc = `set the name of the output file.
-
-Usage:
-
-	- helm mirror inspect-images /tmp/helm -o file --file-name images.txt
-	- helm mirror inspect-images /tmp/helm -o json --file-name images.json
-	- helm mirror inspect-images /tmp/helm -o yaml --file-name images.yaml
 `
 
 // inspectImagesCmd represents the images command
 var inspectImagesCmd = &cobra.Command{
 	Use:   "inspect-images [folder|tgzfile]",
-	Short: "Extract all the images of the Helm Charts.",
+	Short: "Extract all the container images listed in each chart.",
 	Long:  imagesDesc,
 	Args:  validateInspectImagesArgs,
 	RunE:  runInspectImages,
@@ -85,7 +80,6 @@ var inspectImagesCmd = &cobra.Command{
 func init() {
 	inspectImagesCmd.PersistentFlags().BoolVarP(&IgnoreErrors, "ignore-errors", "i", false, "ignores errors whiles processing charts. (Exit Code: 2)")
 	inspectImagesCmd.PersistentFlags().StringVarP(&output, "output", "o", "stdout", outputDesc)
-	inspectImagesCmd.PersistentFlags().StringVar(&imagesFile, "file-name", "images.out", fileNameDesc)
 	rootCmd.AddCommand(inspectImagesCmd)
 }
 
@@ -101,14 +95,19 @@ func validateInspectImagesArgs(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func resolveFormatter(output string, fileName string, l *log.Logger) (formatter.Formatter, error) {
-	imagesFile, err := filepath.Abs(fileName)
+func resolveFormatter(output string, l *log.Logger) (formatter.Formatter, error) {
+	a := strings.Split(output, "=")
+	imagesFile := "images.out"
+	if len(a) > 1 {
+		imagesFile = a[1]
+	}
+	imagesFile, err := filepath.Abs(imagesFile)
 	if err != nil {
 		l.Print("error: geting working directory")
 		return nil, err
 	}
 	var t formatter.Type
-	switch output {
+	switch a[0] {
 	case "file":
 		t = formatter.FileType
 	case "yaml":
@@ -125,7 +124,7 @@ func resolveFormatter(output string, fileName string, l *log.Logger) (formatter.
 
 func runInspectImages(cmd *cobra.Command, args []string) error {
 	target = args[0]
-	formatter, err := resolveFormatter(output, imagesFile, logger)
+	formatter, err := resolveFormatter(output, logger)
 	if err != nil {
 		return err
 	}

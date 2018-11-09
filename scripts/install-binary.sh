@@ -71,13 +71,15 @@ getDownloadURL() {
     DOWNLOAD_URL="https://codeload.github.com/$PROJECT_GH/tar.gz/$version"
   else
     # Use the GitHub API to find the download url for this project.
-    local url="https://api.github.com/repos/$PROJECT_GH/releases/latest"
+    local url="https://github.com/repos/$PROJECT_GH/releases/latest"
     if type "curl" > /dev/null; then
-      DOWNLOAD_URL=$(curl -s $url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+      version=$(curl -s $url | grep -o -E 'v.+\"' | awk '{split($0,a,/"/); print a[1]}')
     elif type "wget" > /dev/null; then
-      DOWNLOAD_URL=$(wget -q -O - $url | grep $OS | awk '/\"browser_download_url\":/{gsub( /[,\"]/,"", $2); print $2}')
+      version=$(wget -qSO- $url --max-redirect 0 2>&1 | grep Location: | awk '{split($0,a,/\//); print a[8]}')
     fi
+    DOWNLOAD_URL="https://codeload.github.com/$PROJECT_GH/tar.gz/$version"
   fi
+  echo "using download url ${DOWNLOAD_URL}"
 }
 
 # downloadFile downloads the latest binary package and also the checksum

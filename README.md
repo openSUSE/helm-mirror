@@ -82,7 +82,7 @@ Use `helm mirror [command] --help` for more information about a command.
 
 ### inspect-images
 
-Extract all the images of the Helm Chart or
+Extract all the container images listed in each Helm Chart or
 the Helm Charts in the folder provided. This command dumps
 the images on `stdout` by default, for more options check
 `output flag`. Example:
@@ -103,29 +103,23 @@ The [folder|tgzfile] has to be a full path.
 
   -i, --ignore-errors      ignores errors whiles processing charts. (Exit Code: 2)
 
-  --file-name string   set the name of the output file. (default "images.out")
-
-```shell
-helm mirror inspect-images /tmp/helm -o file --file-name images.txt
-helm mirror inspect-images /tmp/helm -o json --file-name images.json
-helm mirror inspect-images /tmp/helm -o yaml --file-name images.yaml
-```
-
   -o, --output string      choose an output for the list of images.(default "stdout")
 
-- stdout: prints all images on stdout
-- file: outputs all images to a file. (View file-name flag)
-- json: outputs all images to a file in JSON format. (View file-name flag)
-- yaml: outputs all images to a file in YAML format. (View file-name flag)
-- skopeo: skopeo: outputs all images to a file in YAML format to be used as input
-  to Skopeo Sync. (View file-name flag) [1]
+- file: outputs all images to a file
+- json: outputs all images to a file in JSON format
+- skopeo: outputs all images to a file in YAML format
+  to be used as source file with the 'skopeo sync' command.
+  For more information refer skopeo([1]).
+- stdout: prints all images to standard output
+- yaml: outputs all images to a file in YAML format
 
 ```shell
 helm mirror inspect-images /tmp/helm --output stdout
 helm mirror inspect-images /tmp/helm -o stdout
-helm mirror inspect-images /tmp/helm -o file
-helm mirror inspect-images /tmp/helm -o json
-helm mirror inspect-images /tmp/helm -o yaml
+helm mirror inspect-images /tmp/helm -o file=filename
+helm mirror inspect-images /tmp/helm -o json=filename.json
+helm mirror inspect-images /tmp/helm -o yaml=filename.yaml
+helm mirror inspect-images /tmp/helm -o skopeo=filename.yaml
 ```
 
 #### Global Flags
