@@ -3,6 +3,7 @@ package cmd
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -38,26 +39,32 @@ func Test_validateInspectImagesArgs(t *testing.T) {
 }
 
 func Test_resolveFormatter(t *testing.T) {
+	path, err := filepath.Abs("")
+	if err != nil {
+		t.Errorf("resolvefilePath() = %s", path)
+	}
 	type args struct {
-		output   string
-		fileName string
-		l        *log.Logger
+		output string
+		l      *log.Logger
 	}
 	tests := []struct {
 		name string
 		args args
 		want formatter.Formatter
 	}{
-		{"1", args{"stdout", "test", fakeLog}, formatter.NewFormatter(formatter.StdoutType, "test", fakeLog)},
-		{"2", args{"file", "/test", fakeLog}, formatter.NewFormatter(formatter.FileType, "/test", fakeLog)},
-		{"3", args{"yaml", "/test", fakeLog}, formatter.NewFormatter(formatter.YamlType, "/test", fakeLog)},
-		{"4", args{"json", "/test", fakeLog}, formatter.NewFormatter(formatter.JSONType, "/test", fakeLog)},
-		{"5", args{"notexists", "test", fakeLog}, formatter.NewFormatter(formatter.StdoutType, "test", fakeLog)},
-		{"6", args{"skopeo", "/test", fakeLog}, formatter.NewFormatter(formatter.SkopeoType, "/test", fakeLog)},
+		{"1", args{"stdout", fakeLog}, formatter.NewFormatter(formatter.StdoutType, "images.out", fakeLog)},
+		{"2.1", args{"file", fakeLog}, formatter.NewFormatter(formatter.FileType, path+"/images.out", fakeLog)},
+		{"2.2", args{"file=/test.txt", fakeLog}, formatter.NewFormatter(formatter.FileType, "/test.txt", fakeLog)},
+		{"3.1", args{"yaml", fakeLog}, formatter.NewFormatter(formatter.YamlType, path+"/images.out", fakeLog)},
+		{"3.2", args{"yaml=/test.yaml", fakeLog}, formatter.NewFormatter(formatter.YamlType, "/test.yaml", fakeLog)},
+		{"4.1", args{"json", fakeLog}, formatter.NewFormatter(formatter.JSONType, path+"/images.out", fakeLog)},
+		{"4.2", args{"json=/test.json", fakeLog}, formatter.NewFormatter(formatter.JSONType, "/test.json", fakeLog)},
+		{"5", args{"notexists", fakeLog}, formatter.NewFormatter(formatter.StdoutType, path+"/image.out", fakeLog)},
+		{"6", args{"skopeo=/skopeo.yaml", fakeLog}, formatter.NewFormatter(formatter.SkopeoType, "/skopeo.yaml", fakeLog)},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got, _ := resolveFormatter(tt.args.output, tt.args.fileName, tt.args.l); !reflect.DeepEqual(got, tt.want) {
+			if got, _ := resolveFormatter(tt.args.output, tt.args.l); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("resolveFormatter() = %v, want %v", got, tt.want)
 			}
 		})
@@ -67,7 +74,6 @@ func Test_resolveFormatter(t *testing.T) {
 func Test_runInspectImages(t *testing.T) {
 	var cmd = &cobra.Command{}
 	cmd.PersistentFlags().StringVarP(&output, "output", "o", "stdout", outputDesc)
-	cmd.PersistentFlags().StringVar(&imagesFile, "file-name", "images.out", fileNameDesc)
 	type args struct {
 		cmd  *cobra.Command
 		args []string

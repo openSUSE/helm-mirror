@@ -112,7 +112,7 @@ test: local-validate-go
 	$(GO) test -v ./...
 
 cover:
-	bash <cover.sh
+	bash <scripts/cover.sh
 
 bootstrap:
 	dep ensure

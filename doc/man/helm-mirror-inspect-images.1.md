@@ -1,15 +1,15 @@
-% mirror-inspect-images(1) # mirror inspect-images - Extract container images used by charts
+% mirror-inspect-images(1) # mirror inspect-images - Extract all the container images listed in each chart.
 % SUSE LLC
 % OCTOBER 2018
 # NAME
-mirror inspect-images - Extract container images used by charts
+mirror inspect-images - Extract all the container images listed in each chart.
 
 # SYNOPSIS
 **mirror inspect-images** target
 [**--help**|**-h**]
 
 # DESCRIPTION
-**mirror inspect-images** Extracts all the images of the Helm Chart or
+**mirror inspect-images** Extract all the container images listed in each Helm Chart or
 the Helm Charts in the folder provided. This command dumps the images on
 **stdout** by default.
 
@@ -30,11 +30,9 @@ option.
 **-i, --ignore-errors**
   Ignores errors whiles processing charts. (Exit Code: 2)
 
-**--file-name**
-  Sets the name of the output file.
-
 **-o, --output**
-  Choose an output for the list of images. (**stdout**|json|yaml|file|skopeo[1])
+  choose an output for the list of images and specify the file name, if not specified 'images.out' will be the default.
+  (file|json|skopeo[1]|**stdout**|yaml)
 
 # EXAMPLES
 The following examples show different ways to interact with **mirror inspect-images**
@@ -50,12 +48,11 @@ Inspect a chart file and print to **stdout**
 % helm mirror inspect-images /tmp/helm/chart.tgz
 ```
 
-Inspect a folder and export to other formats, use **--file-name** to change
-the name of the output file.
+Inspect a folder and export to other formats.
 ```
-% helm mirror inspect-images /tmp/helm -o file --file-name images.txt
-% helm mirror inspect-images /tmp/helm -o json --file-name images.json
-% helm mirror inspect-images /tmp/helm -o yaml --file-name images.yaml
+% helm mirror inspect-images /tmp/helm -o file=images.txt
+% helm mirror inspect-images /tmp/helm -o json=images.json
+% helm mirror inspect-images /tmp/helm -o yaml=images.yaml
 ```
 
 Inspect a folder and ignore the errors while rendering the chart, this
