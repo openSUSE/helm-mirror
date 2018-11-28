@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 
 	"k8s.io/helm/pkg/getter"
@@ -22,15 +23,17 @@ type GetService struct {
 	verbose      bool
 	ignoreErrors bool
 	logger       *log.Logger
+	newChartHost string
 }
 
 // NewGetService return a new instace of GetService
-func NewGetService(config repo.Entry, verbose bool, ignoreErrors bool, logger *log.Logger) GetServiceInterface {
+func NewGetService(config repo.Entry, verbose bool, ignoreErrors bool, logger *log.Logger, newChartHost string) GetServiceInterface {
 	return &GetService{
 		config:       config,
 		verbose:      verbose,
 		ignoreErrors: ignoreErrors,
 		logger:       logger,
+		newChartHost: newChartHost,
 	}
 }
 
@@ -67,6 +70,12 @@ func (g *GetService) Get() error {
 			}
 		}
 	}
+
+	err = prepareIndexFile(g.config.Name, g.config.URL, g.newChartHost, g.logger)
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+
 	if len(errs) > 0 && !g.ignoreErrors {
 		return errors.New(strings.Join(errs, "\n"))
 	}
@@ -79,5 +88,28 @@ func writeFile(name string, content []byte, log *log.Logger) error {
 		log.Printf("cannot write files %s: %s", name, err)
 		return err
 	}
+	return nil
+}
+
+func prepareIndexFile(folder string, URL string, newChartHost string, log *log.Logger) error {
+	indexContent, err := ioutil.ReadFile(folder + "/downloaded-index.yaml")
+	if err != nil {
+		return err
+	}
+	content := string(indexContent)
+	if newChartHost != "" {
+		content = strings.Replace(content, URL, newChartHost, -1)
+	}
+
+	err = writeFile(folder+"/index.yaml", []byte(content), log)
+	if err != nil {
+		return err
+	}
+
+	err = os.RemoveAll(folder + "/downloaded-index.yaml")
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

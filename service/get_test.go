@@ -1,10 +1,12 @@
 package service
 
 import (
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	"k8s.io/helm/pkg/repo"
@@ -20,24 +22,25 @@ func (m *mockLog) Write(p []byte) (n int, err error) {
 
 func TestNewGetService(t *testing.T) {
 	config := repo.Entry{Name: "/tmp/helmmirrortest", URL: "http://helmrepo"}
-	gService := &GetService{config: config, logger: fakeLogger}
+	gService := &GetService{config: config, logger: fakeLogger, newChartHost: "https://newchartserver.com"}
 	type args struct {
 		helmRepo     string
 		workspace    string
 		verbose      bool
 		ignoreErrors bool
 		logger       *log.Logger
+		newChartHost string
 	}
 	tests := []struct {
 		name string
 		args args
 		want GetServiceInterface
 	}{
-		{"1", args{"http://helmrepo", "/tmp/helmmirrortest", false, false, fakeLogger}, gService},
+		{"1", args{"http://helmrepo", "/tmp/helmmirrortest", false, false, fakeLogger, "https://newchartserver.com"}, gService},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewGetService(config, tt.args.verbose, tt.args.ignoreErrors, tt.args.logger); !reflect.DeepEqual(got, tt.want) {
+			if got := NewGetService(config, tt.args.verbose, tt.args.ignoreErrors, tt.args.logger, tt.args.newChartHost); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewGetService() = %v, want %v", got, tt.want)
 			}
 		})
@@ -130,4 +133,47 @@ func indexFile(w http.ResponseWriter, r *http.Request) {
 func chartTgz(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "binary/octet-stream")
 	w.Write([]byte(chartTGZ))
+}
+
+func Test_prepareIndexFile(t *testing.T) {
+	prepareTmp()
+	type args struct {
+		folder       string
+		URL          string
+		newChartHost string
+		log          *log.Logger
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{"1", args{tmp + "/processfolder", "http://127.0.0.1:1793", "http://newchart.server.com", fakeLogger}, false},
+		{"2", args{tmp + "/processerrorfolder", "http://127.0.0.1:1793", "http://newchart.server.com", fakeLogger}, true},
+		{"3", args{tmp + "/processfolder", "http://127.0.0.1:1793", "", fakeLogger}, false},
+	}
+	for _, tt := range tests {
+		ioutil.WriteFile(tmp+"/processfolder/downloaded-index.yaml", []byte(indexYaml), 0666)
+		t.Run(tt.name, func(t *testing.T) {
+			if err := prepareIndexFile(tt.args.folder, tt.args.URL, tt.args.newChartHost, tt.args.log); (err != nil) != tt.wantErr {
+				t.Errorf("prepareIndexFile() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.name == "1" {
+				contentBytes, err := ioutil.ReadFile(tmp + "/processfolder/index.yaml")
+				if err != nil {
+					t.Log("Error reading index.yaml")
+				}
+				content := string(contentBytes)
+				count := strings.Count(content, tt.args.newChartHost)
+				if count != 3 {
+					t.Errorf("prepareIndexFile() replacedCount = %v, want replacedCount %v", count, 3)
+				}
+				_, err = os.Stat(tmp + "/processfolder/downloaded-index.yaml")
+				if err == nil {
+					t.Errorf("prepareIndexFile() dowloaded-index.yaml not deleted")
+				}
+			}
+		})
+	}
+	tearDownTmp()
 }

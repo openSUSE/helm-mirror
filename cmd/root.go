@@ -30,17 +30,18 @@ import (
 
 var (
 	//Verbose defines if the command is being run with verbose mode
-	Verbose  bool
-	folder   string
-	repoURL  *url.URL
-	flags    = log.Ldate | log.Lmicroseconds | log.Lshortfile
-	prefix   = "helm-mirror: "
-	logger   *log.Logger
-	username string
-	password string
-	caFile   string
-	certFile string
-	keyFile  string
+	Verbose      bool
+	folder       string
+	repoURL      *url.URL
+	flags        = log.Ldate | log.Lmicroseconds | log.Lshortfile
+	prefix       = "helm-mirror: "
+	logger       *log.Logger
+	username     string
+	password     string
+	caFile       string
+	certFile     string
+	keyFile      string
+	newChartHost string
 )
 
 const rootDesc = `Mirror Helm Charts from an index file into a local folder.
@@ -108,6 +109,7 @@ func init() {
 	rootCmd.Flags().StringVar(&caFile, "ca-file", "", "verify certificates of HTTPS-enabled servers using this CA bundle")
 	rootCmd.Flags().StringVar(&certFile, "cert-file", "", "identify HTTPS client using this SSL certificate file")
 	rootCmd.Flags().StringVar(&keyFile, "key-file", "", "identify HTTPS client using this SSL key file")
+	rootCmd.Flags().StringVar(&newChartHost, "overwrite-host", "", "overwrites the host in chart's dowload URLs of the index file")
 	rootCmd.AddCommand(newVersionCmd())
 }
 
@@ -158,7 +160,7 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		CertFile: certFile,
 		KeyFile:  keyFile,
 	}
-	getService := service.NewGetService(config, Verbose, IgnoreErrors, logger)
+	getService := service.NewGetService(config, Verbose, IgnoreErrors, logger, newChartHost)
 	err = getService.Get()
 	if err != nil {
 		return err
