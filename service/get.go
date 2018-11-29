@@ -23,17 +23,17 @@ type GetService struct {
 	verbose      bool
 	ignoreErrors bool
 	logger       *log.Logger
-	newChartHost string
+	newRootURL   string
 }
 
 // NewGetService return a new instace of GetService
-func NewGetService(config repo.Entry, verbose bool, ignoreErrors bool, logger *log.Logger, newChartHost string) GetServiceInterface {
+func NewGetService(config repo.Entry, verbose bool, ignoreErrors bool, logger *log.Logger, newRootURL string) GetServiceInterface {
 	return &GetService{
 		config:       config,
 		verbose:      verbose,
 		ignoreErrors: ignoreErrors,
 		logger:       logger,
-		newChartHost: newChartHost,
+		newRootURL:   newRootURL,
 	}
 }
 
@@ -71,7 +71,7 @@ func (g *GetService) Get() error {
 		}
 	}
 
-	err = prepareIndexFile(g.config.Name, g.config.URL, g.newChartHost, g.logger)
+	err = prepareIndexFile(g.config.Name, g.config.URL, g.newRootURL, g.logger)
 	if err != nil {
 		errs = append(errs, err.Error())
 	}
@@ -91,22 +91,18 @@ func writeFile(name string, content []byte, log *log.Logger) error {
 	return nil
 }
 
-func prepareIndexFile(folder string, URL string, newChartHost string, log *log.Logger) error {
-	indexContent, err := ioutil.ReadFile(folder + "/downloaded-index.yaml")
-	if err != nil {
-		return err
-	}
-	content := string(indexContent)
-	if newChartHost != "" {
-		content = strings.Replace(content, URL, newChartHost, -1)
-	}
-
-	err = writeFile(folder+"/index.yaml", []byte(content), log)
-	if err != nil {
-		return err
+func prepareIndexFile(folder string, repoURL string, newRootURL string, log *log.Logger) error {
+	if newRootURL != "" {
+		indexContent, err := ioutil.ReadFile(folder + "/downloaded-index.yaml")
+		if err != nil {
+			return err
+		}
+		content := string(indexContent)
+		content = strings.Replace(content, repoURL, newRootURL, -1)
+		writeFile(folder+"/downloaded-index.yaml", []byte(content), log)
 	}
 
-	err = os.RemoveAll(folder + "/downloaded-index.yaml")
+	err := os.Rename(folder+"/downloaded-index.yaml", folder+"/index.yaml")
 	if err != nil {
 		return err
 	}

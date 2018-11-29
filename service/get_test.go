@@ -22,14 +22,14 @@ func (m *mockLog) Write(p []byte) (n int, err error) {
 
 func TestNewGetService(t *testing.T) {
 	config := repo.Entry{Name: "/tmp/helmmirrortest", URL: "http://helmrepo"}
-	gService := &GetService{config: config, logger: fakeLogger, newChartHost: "https://newchartserver.com"}
+	gService := &GetService{config: config, logger: fakeLogger, newRootURL: "https://newchartserver.com"}
 	type args struct {
 		helmRepo     string
 		workspace    string
 		verbose      bool
 		ignoreErrors bool
 		logger       *log.Logger
-		newChartHost string
+		newRootURL   string
 	}
 	tests := []struct {
 		name string
@@ -40,7 +40,7 @@ func TestNewGetService(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewGetService(config, tt.args.verbose, tt.args.ignoreErrors, tt.args.logger, tt.args.newChartHost); !reflect.DeepEqual(got, tt.want) {
+			if got := NewGetService(config, tt.args.verbose, tt.args.ignoreErrors, tt.args.logger, tt.args.newRootURL); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewGetService() = %v, want %v", got, tt.want)
 			}
 		})
@@ -138,10 +138,10 @@ func chartTgz(w http.ResponseWriter, r *http.Request) {
 func Test_prepareIndexFile(t *testing.T) {
 	prepareTmp()
 	type args struct {
-		folder       string
-		URL          string
-		newChartHost string
-		log          *log.Logger
+		folder     string
+		URL        string
+		newRootURL string
+		log        *log.Logger
 	}
 	tests := []struct {
 		name    string
@@ -155,7 +155,7 @@ func Test_prepareIndexFile(t *testing.T) {
 	for _, tt := range tests {
 		ioutil.WriteFile(tmp+"/processfolder/downloaded-index.yaml", []byte(indexYaml), 0666)
 		t.Run(tt.name, func(t *testing.T) {
-			if err := prepareIndexFile(tt.args.folder, tt.args.URL, tt.args.newChartHost, tt.args.log); (err != nil) != tt.wantErr {
+			if err := prepareIndexFile(tt.args.folder, tt.args.URL, tt.args.newRootURL, tt.args.log); (err != nil) != tt.wantErr {
 				t.Errorf("prepareIndexFile() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.name == "1" {
@@ -164,7 +164,7 @@ func Test_prepareIndexFile(t *testing.T) {
 					t.Log("Error reading index.yaml")
 				}
 				content := string(contentBytes)
-				count := strings.Count(content, tt.args.newChartHost)
+				count := strings.Count(content, tt.args.newRootURL)
 				if count != 3 {
 					t.Errorf("prepareIndexFile() replacedCount = %v, want replacedCount %v", count, 3)
 				}
