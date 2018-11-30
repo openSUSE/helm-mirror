@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -78,14 +79,14 @@ func (i *ImagesService) Images() error {
 func (i *ImagesService) processDirectory(target string) error {
 	hasTgzCharts := false
 	e := i.processTarget(target)
-	err := filepath.Walk(target, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(target, func(dir string, info os.FileInfo, err error) error {
 		if err != nil {
-			i.logger.Printf("error: cannot access a path %q: %v\n", path, err)
+			i.logger.Printf("error: cannot access a dir %q: %v\n", dir, err)
 			return err
 		}
 		if !info.IsDir() && strings.Contains(info.Name(), ".tgz") {
 			hasTgzCharts = true
-			err := i.processTarget(target + string(os.PathSeparator) + info.Name())
+			err := i.processTarget(path.Join(target, info.Name()))
 			if err != nil && i.ignoreErrors {
 				i.exitWithErrors = true
 			} else if err != nil {

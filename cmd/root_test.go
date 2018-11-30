@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -45,6 +49,11 @@ func Test_validateRootArgs(t *testing.T) {
 }
 
 func Test_runRoot(t *testing.T) {
+	dir, err := ioutil.TempDir("", "helmmirror")
+	if err != nil {
+		t.Errorf("creating temp dir: %s", err)
+	}
+	defer os.RemoveAll(dir)
 	svr := startHTTPServer()
 	type args struct {
 		cmd        *cobra.Command
@@ -56,24 +65,24 @@ func Test_runRoot(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"1", args{&cobra.Command{}, []string{"http://test", "/mr/mzxyptlk"}, ""}, true},
-		{"2", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", "/tmp/helm-mirror/test"}, ""}, false},
-		{"3", args{&cobra.Command{}, []string{"%", "/tmp/helm-mirror/test"}, ""}, true},
-		{"4", args{&cobra.Command{}, []string{"http://test", "/tmp/helm-mirror/test"}, "%"}, true},
-		{"5", args{&cobra.Command{}, []string{"http://test", "/tmp/helm-mirror/test"}, "ftp://test"}, true},
-		{"6", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", "/tmp/helm-mirror/test"}, "https://test/com/charts"}, false},
-		{"7", args{&cobra.Command{}, []string{"http://127.0.0.1:1111", "/tmp/helm-mirror/test"}, "https://test/com/charts"}, true},
+		{"1", args{&cobra.Command{}, []string{"http://test", path.Join("/mr", "mzxyptlk")}, ""}, true},
+		{"2", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", dir}, ""}, false},
+		{"3", args{&cobra.Command{}, []string{"%", dir}, ""}, true},
+		{"4", args{&cobra.Command{}, []string{"http://test", dir}, "%"}, true},
+		{"5", args{&cobra.Command{}, []string{"http://test", dir}, "ftp://test"}, true},
+		{"6", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", dir}, "https://test/com/charts"}, false},
+		{"7", args{&cobra.Command{}, []string{"http://127.0.0.1:1111", dir}, "https://test/com/charts"}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			fmt.Printf("%s clean\n", filepath.Clean(dir))
+			fmt.Printf("%v\n", tt.args.args[1])
 			newRootURL = tt.args.newRootURL
 			if err := runRoot(tt.args.cmd, tt.args.args); (err != nil) != tt.wantErr {
 				t.Errorf("runRoot() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
-	os.RemoveAll("/mr/mzxyptlk")
-	os.RemoveAll("/tmp/helm-mirror/test")
 	if err := svr.Shutdown(nil); err != nil {
 		t.Errorf("error stoping down web server")
 	}
@@ -95,15 +104,15 @@ func startHTTPServer() *http.Server {
 
 func indexFile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "binary/octet-stream")
-	w.Write([]byte(indexYaml))
+	w.Write(indexYaml)
 }
 
 func chartTgz(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "binary/octet-stream")
-	w.Write([]byte(chartTGZ))
+	w.Write(chartTGZ)
 }
 
-var indexYaml = `apiVersion: v1
+var indexYaml = []byte(`apiVersion: v1
 entries:
   chart1:
   - apiVersion: v2
@@ -131,7 +140,7 @@ entries:
     urls:
     - http://127.0.0.1:1793/chart2-0.0.0-pre.tgz
     version: 0.0.0-pre
-`
+`)
 
 var chartTGZ = []byte{31, 139, 8, 0, 224, 223, 181, 91, 0, 3, 237, 193, 1, 13, 0, 0, 0, 194,
 	160, 247, 79, 109, 14, 55, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 55, 3, 154, 222, 29, 39, 0, 40, 0, 0}

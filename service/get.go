@@ -1,15 +1,23 @@
 package service
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"strings"
 
 	"k8s.io/helm/pkg/getter"
 	"k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/repo"
+)
+
+const (
+	downloadedFileName = "downloaded-index.yaml"
+	indexFileName      = "index.yaml"
 )
 
 // GetServiceInterface defines a Get service
@@ -44,7 +52,8 @@ func (g *GetService) Get() error {
 		return err
 	}
 
-	err = chartRepo.DownloadIndexFile(g.config.Name + "/downloaded-index.yaml")
+	downloadedIndexPath := path.Join(g.config.Name, downloadedFileName)
+	err = chartRepo.DownloadIndexFile(downloadedIndexPath)
 	if err != nil {
 		return err
 	}
@@ -63,7 +72,9 @@ func (g *GetService) Get() error {
 				if err != nil {
 					errs = append(errs, err.Error())
 				}
-				err = writeFile(g.config.Name+"/"+n+"-"+cc.Version+".tgz", b.Bytes(), g.logger)
+				chartFileName := fmt.Sprintf("%s-%s.tgz", n, cc.Version)
+				chartPath := path.Join(g.config.Name, chartFileName)
+				err = writeFile(chartPath, b.Bytes(), g.logger)
 				if err != nil {
 					errs = append(errs, err.Error())
 				}
@@ -92,20 +103,15 @@ func writeFile(name string, content []byte, log *log.Logger) error {
 }
 
 func prepareIndexFile(folder string, repoURL string, newRootURL string, log *log.Logger) error {
+	downloadedPath := path.Join(folder, downloadedFileName)
+	indexPath := path.Join(folder, indexFileName)
 	if newRootURL != "" {
-		indexContent, err := ioutil.ReadFile(folder + "/downloaded-index.yaml")
+		indexContent, err := ioutil.ReadFile(downloadedPath)
 		if err != nil {
 			return err
 		}
-		content := string(indexContent)
-		content = strings.Replace(content, repoURL, newRootURL, -1)
-		writeFile(folder+"/downloaded-index.yaml", []byte(content), log)
+		content := bytes.Replace(indexContent, []byte(repoURL), []byte(newRootURL), -1)
+		writeFile(downloadedPath, []byte(content), log)
 	}
-
-	err := os.Rename(folder+"/downloaded-index.yaml", folder+"/index.yaml")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return os.Rename(downloadedPath, indexPath)
 }

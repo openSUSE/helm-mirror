@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"reflect"
 	"strings"
 	"testing"
@@ -21,7 +22,12 @@ func (m *mockLog) Write(p []byte) (n int, err error) {
 }
 
 func TestNewGetService(t *testing.T) {
-	config := repo.Entry{Name: "/tmp/helmmirrortest", URL: "http://helmrepo"}
+	dir, err := ioutil.TempDir("", "helmmirrortests")
+	if err != nil {
+		t.Errorf("Creating tmp directory: %s", err)
+	}
+	defer os.RemoveAll(dir)
+	config := repo.Entry{Name: dir, URL: "http://helmrepo"}
 	gService := &GetService{config: config, logger: fakeLogger, newRootURL: "https://newchartserver.com"}
 	type args struct {
 		helmRepo     string
@@ -36,7 +42,7 @@ func TestNewGetService(t *testing.T) {
 		args args
 		want GetServiceInterface
 	}{
-		{"1", args{"http://helmrepo", "/tmp/helmmirrortest", false, false, fakeLogger, "https://newchartserver.com"}, gService},
+		{"1", args{"http://helmrepo", dir, false, false, fakeLogger, "https://newchartserver.com"}, gService},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -45,11 +51,14 @@ func TestNewGetService(t *testing.T) {
 			}
 		})
 	}
-	os.RemoveAll("/tmp/helmmirrortest")
 }
 
 func TestGetService_Get(t *testing.T) {
-	prepareTmp()
+	dir, err := prepareTmp()
+	if err != nil {
+		t.Errorf("loading testdata: %s", err)
+	}
+	defer os.RemoveAll(dir)
 	svr := startHTTPServer()
 	type fields struct {
 		repoURL      string
@@ -65,7 +74,7 @@ func TestGetService_Get(t *testing.T) {
 		{"1", fields{"", "", false, false}, true},
 		{"2", fields{"http://127.0.0.1", "", false, false}, true},
 		{"3", fields{"http://127.0.0.1:1793", "", false, false}, true},
-		{"4", fields{"http://127.0.0.1:1793", tmp + "/get", false, false}, false},
+		{"4", fields{"http://127.0.0.1:1793", path.Join(dir, "get"), false, false}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -81,7 +90,6 @@ func TestGetService_Get(t *testing.T) {
 		})
 	}
 	os.RemoveAll("downloaded-index.yaml")
-	tearDownTmp()
 	if err := svr.Shutdown(nil); err != nil {
 		t.Errorf("error stoping down web server")
 	}
@@ -132,11 +140,15 @@ func indexFile(w http.ResponseWriter, r *http.Request) {
 
 func chartTgz(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "binary/octet-stream")
-	w.Write([]byte(chartTGZ))
+	w.Write(chartTGZ)
 }
 
 func Test_prepareIndexFile(t *testing.T) {
-	prepareTmp()
+	dir, err := prepareTmp()
+	if err != nil {
+		t.Errorf("loading testdata: %s", err)
+	}
+	defer os.RemoveAll(dir)
 	type args struct {
 		folder     string
 		URL        string
@@ -148,18 +160,18 @@ func Test_prepareIndexFile(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"1", args{tmp + "/processfolder", "http://127.0.0.1:1793", "http://newchart.server.com", fakeLogger}, false},
-		{"2", args{tmp + "/processerrorfolder", "http://127.0.0.1:1793", "http://newchart.server.com", fakeLogger}, true},
-		{"3", args{tmp + "/processfolder", "http://127.0.0.1:1793", "", fakeLogger}, false},
+		{"1", args{path.Join(dir, "processfolder"), "http://127.0.0.1:1793", "http://newchart.server.com", fakeLogger}, false},
+		{"2", args{path.Join(dir, "processerrorfolder"), "http://127.0.0.1:1793", "http://newchart.server.com", fakeLogger}, true},
+		{"3", args{path.Join(dir, "processfolder"), "http://127.0.0.1:1793", "", fakeLogger}, false},
 	}
 	for _, tt := range tests {
-		ioutil.WriteFile(tmp+"/processfolder/downloaded-index.yaml", []byte(indexYaml), 0666)
+		ioutil.WriteFile(path.Join(dir, "processfolder", "downloaded-index.yaml"), []byte(indexYaml), 0666)
 		t.Run(tt.name, func(t *testing.T) {
 			if err := prepareIndexFile(tt.args.folder, tt.args.URL, tt.args.newRootURL, tt.args.log); (err != nil) != tt.wantErr {
 				t.Errorf("prepareIndexFile() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.name == "1" {
-				contentBytes, err := ioutil.ReadFile(tmp + "/processfolder/index.yaml")
+				contentBytes, err := ioutil.ReadFile(path.Join(dir, "processfolder", "index.yaml"))
 				if err != nil {
 					t.Log("Error reading index.yaml")
 				}
@@ -168,12 +180,11 @@ func Test_prepareIndexFile(t *testing.T) {
 				if count != 3 {
 					t.Errorf("prepareIndexFile() replacedCount = %v, want replacedCount %v", count, 3)
 				}
-				_, err = os.Stat(tmp + "/processfolder/downloaded-index.yaml")
+				_, err = os.Stat(path.Join(dir, "processfolder", "downloaded-index.yaml"))
 				if err == nil {
 					t.Errorf("prepareIndexFile() dowloaded-index.yaml not deleted")
 				}
 			}
 		})
 	}
-	tearDownTmp()
 }
