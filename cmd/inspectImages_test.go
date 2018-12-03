@@ -44,7 +44,7 @@ func Test_resolveFormatter(t *testing.T) {
 	if err != nil {
 		t.Errorf("resolvefilePath() = %s", abs)
 	}
-	resultPath := path.Join(abs, "/images.out")
+	resultPath := path.Join(abs, "images.out")
 	type args struct {
 		output string
 		l      *log.Logger
