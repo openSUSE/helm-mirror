@@ -1,14 +1,23 @@
 package service
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
+	"path"
 	"strings"
 
 	"k8s.io/helm/pkg/getter"
 	"k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/repo"
+)
+
+const (
+	downloadedFileName = "downloaded-index.yaml"
+	indexFileName      = "index.yaml"
 )
 
 // GetServiceInterface defines a Get service
@@ -22,15 +31,17 @@ type GetService struct {
 	verbose      bool
 	ignoreErrors bool
 	logger       *log.Logger
+	newRootURL   string
 }
 
 // NewGetService return a new instace of GetService
-func NewGetService(config repo.Entry, verbose bool, ignoreErrors bool, logger *log.Logger) GetServiceInterface {
+func NewGetService(config repo.Entry, verbose bool, ignoreErrors bool, logger *log.Logger, newRootURL string) GetServiceInterface {
 	return &GetService{
 		config:       config,
 		verbose:      verbose,
 		ignoreErrors: ignoreErrors,
 		logger:       logger,
+		newRootURL:   newRootURL,
 	}
 }
 
@@ -41,7 +52,8 @@ func (g *GetService) Get() error {
 		return err
 	}
 
-	err = chartRepo.DownloadIndexFile(g.config.Name + "/downloaded-index.yaml")
+	downloadedIndexPath := path.Join(g.config.Name, downloadedFileName)
+	err = chartRepo.DownloadIndexFile(downloadedIndexPath)
 	if err != nil {
 		return err
 	}
@@ -60,13 +72,21 @@ func (g *GetService) Get() error {
 				if err != nil {
 					errs = append(errs, err.Error())
 				}
-				err = writeFile(g.config.Name+"/"+n+"-"+cc.Version+".tgz", b.Bytes(), g.logger)
+				chartFileName := fmt.Sprintf("%s-%s.tgz", n, cc.Version)
+				chartPath := path.Join(g.config.Name, chartFileName)
+				err = writeFile(chartPath, b.Bytes(), g.logger)
 				if err != nil {
 					errs = append(errs, err.Error())
 				}
 			}
 		}
 	}
+
+	err = prepareIndexFile(g.config.Name, g.config.URL, g.newRootURL, g.logger)
+	if err != nil {
+		errs = append(errs, err.Error())
+	}
+
 	if len(errs) > 0 && !g.ignoreErrors {
 		return errors.New(strings.Join(errs, "\n"))
 	}
@@ -80,4 +100,18 @@ func writeFile(name string, content []byte, log *log.Logger) error {
 		return err
 	}
 	return nil
+}
+
+func prepareIndexFile(folder string, repoURL string, newRootURL string, log *log.Logger) error {
+	downloadedPath := path.Join(folder, downloadedFileName)
+	indexPath := path.Join(folder, indexFileName)
+	if newRootURL != "" {
+		indexContent, err := ioutil.ReadFile(downloadedPath)
+		if err != nil {
+			return err
+		}
+		content := bytes.Replace(indexContent, []byte(repoURL), []byte(newRootURL), -1)
+		writeFile(downloadedPath, []byte(content), log)
+	}
+	return os.Rename(downloadedPath, indexPath)
 }

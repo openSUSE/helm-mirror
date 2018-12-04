@@ -2,17 +2,20 @@ package service
 
 import (
 	"bytes"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"reflect"
 	"testing"
 
 	"github.com/openSUSE/helm-mirror/formatter"
 )
 
-var buff bytes.Buffer
-var tmp = "/tmp/mirror"
-var fakeFormatter = &mockFormatter{}
+var (
+	buff          bytes.Buffer
+	fakeFormatter = &mockFormatter{}
+)
 
 func TestNewImagesService(t *testing.T) {
 	type args struct {
@@ -36,8 +39,15 @@ func TestNewImagesService(t *testing.T) {
 }
 
 func TestImagesService_Images(t *testing.T) {
-	prepareTmp()
-	defer tearDownTmp()
+	dir, err := prepareTmp()
+	if err != nil {
+		t.Errorf("loading testdata: %s", err)
+	}
+	defer os.RemoveAll(dir)
+	processPath := path.Join(dir, "processfolder")
+	errorPath := path.Join(dir, "processfoldererror")
+	testdataPath := path.Join(dir, "testdata")
+	processTgzPath := path.Join(dir, "processtgz")
 	type fields struct {
 		target       string
 		buff         bytes.Buffer
@@ -48,11 +58,12 @@ func TestImagesService_Images(t *testing.T) {
 		fields  fields
 		wantErr bool
 	}{
-		{"1", fields{tmp + "/processfolder", buff, false}, false},
-		{"2", fields{tmp + "/testdata/chart6", buff, false}, true},
-		{"3", fields{tmp + "/testdata/chart1.tgz", buff, false}, false},
-		{"4", fields{tmp + "/mr/mzxyptlk", buff, false}, true},
-		{"5", fields{tmp + "/processfoldererror", buff, true}, false},
+		{"1", fields{processPath, buff, false}, false},
+		{"2", fields{path.Join(testdataPath, "chart6"), buff, false}, true},
+		{"3.1", fields{path.Join(testdataPath, "chart1"), buff, false}, false},
+		{"3.2", fields{path.Join(processTgzPath, "chart1.tgz"), buff, false}, false},
+		{"4", fields{path.Join(dir, "mr", "mzxyptlk"), buff, false}, true},
+		{"5", fields{errorPath, buff, true}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -72,7 +83,13 @@ func TestImagesService_Images(t *testing.T) {
 }
 
 func TestImagesService_processDirectory(t *testing.T) {
-	prepareTmp()
+	dir, err := prepareTmp()
+	if err != nil {
+		t.Errorf("loading testdata: %s", err)
+	}
+	defer os.RemoveAll(dir)
+	processPath := path.Join(dir, "processfolder")
+	processTgzPath := path.Join(dir, "processtgz")
 	type fields struct {
 		target    string
 		imageFile string
@@ -82,10 +99,10 @@ func TestImagesService_processDirectory(t *testing.T) {
 		fields  fields
 		wantErr bool
 	}{
-		{"1", fields{tmp + "/processfolder", "images"}, false},
-		{"2", fields{tmp + "/testdata", "images"}, true},
-		{"3", fields{tmp + "/testdata/chart1.tgz", "images"}, true},
-		{"4", fields{tmp + "/processfolder/chart6", "images"}, true},
+		{"1", fields{processPath, "images"}, false},
+		{"2", fields{processTgzPath, "images"}, true},
+		{"3", fields{path.Join(processTgzPath, "chart1.tgz"), "images"}, true},
+		{"4", fields{path.Join(processPath, "chart6.tgz"), "images"}, true},
 	}
 	for _, tt := range tests {
 		var buf bytes.Buffer
@@ -101,24 +118,30 @@ func TestImagesService_processDirectory(t *testing.T) {
 			}
 		})
 	}
-	tearDownTmp()
 }
 
 func TestImagesService_processTarget(t *testing.T) {
-	prepareTmp()
+	dir, err := prepareTmp()
+	if err != nil {
+		t.Errorf("loading testdata: %s", err)
+	}
+	defer os.RemoveAll(dir)
+	processTgzPath := path.Join(dir, "processtgz")
 	tests := []struct {
 		name    string
 		target  string
+		verbose bool
 		wantBuf string
 		wantErr bool
 	}{
-		{"1", tmp + "/testdata/chart1.tgz", "alpine:3.3\n", false},
-		{"2", tmp + "/testdata/chart2.tgz", "beta.opensuse.com/alpha/opensuse:42.3\n", false},
-		{"3", tmp + "/testdata/.tgz", "", true},
-		{"4", tmp + "/testdata/chart3.tgz", "", false},
-		{"5", tmp + "/testdata/chart4.tgz", "/alpha/opensuse:42.3\n", false},
-		{"6", tmp + "/testdata/chart5.tgz", "", true},
-		{"7", tmp + "/testdata/chart6", "", true},
+		{"1", path.Join(processTgzPath, "chart1.tgz"), false, "alpine:3.3\n", false},
+		{"2", path.Join(processTgzPath, "chart2.tgz"), false, "beta.opensuse.com/alpha/opensuse:42.3\n", false},
+		{"3", path.Join(processTgzPath, ".tgz"), false, "", true},
+		{"4", path.Join(processTgzPath, "chart3.tgz"), false, "", false},
+		{"5", path.Join(processTgzPath, "chart4.tgz"), false, "/alpha/opensuse:42.3\n", false},
+		{"6", path.Join(processTgzPath, "chart5.tgz"), false, "", true},
+		{"7", path.Join(processTgzPath, "chart6"), false, "", true},
+		{"8", path.Join(processTgzPath, "chart6"), true, "", true},
 	}
 	for _, tt := range tests {
 		var buf bytes.Buffer
@@ -127,6 +150,7 @@ func TestImagesService_processTarget(t *testing.T) {
 			formatter: fakeFormatter,
 			logger:    fakeLogger,
 			buffer:    buf,
+			verbose:   tt.verbose,
 		}
 		t.Run(tt.name, func(t *testing.T) {
 			if err := i.processTarget(tt.target); (err != nil) != tt.wantErr {
@@ -138,11 +162,9 @@ func TestImagesService_processTarget(t *testing.T) {
 			}
 		})
 	}
-	tearDownTmp()
 }
 
 func Test_sanitizeImageString(t *testing.T) {
-	prepareTmp()
 	tests := []struct {
 		name  string
 		image string
@@ -170,35 +192,55 @@ func Test_sanitizeImageString(t *testing.T) {
 			}
 		})
 	}
-	tearDownTmp()
 }
 
-func prepareTmp() {
-	os.MkdirAll(tmp+"/processfolder", 0777)
-	os.MkdirAll(tmp+"/processfoldererror", 0777)
-	os.MkdirAll(tmp+"/get", 0777)
-	cpCmd := exec.Command("cp", "-R", "testdata", tmp)
-	cpCmd.Run()
-	tarCmd := exec.Command("tar", "zcvf", tmp+"/testdata/chart1.tgz", "--directory="+tmp+"/testdata", "chart1")
-	tarCmd.Run()
-	tarCmd = exec.Command("tar", "zcvf", tmp+"/testdata/chart2.tgz", "--directory="+tmp+"/testdata", "chart2")
-	tarCmd.Run()
-	tarCmd = exec.Command("tar", "zcvf", tmp+"/testdata/chart3.tgz", "--directory="+tmp+"/testdata", "chart3")
-	tarCmd.Run()
-	tarCmd = exec.Command("tar", "zcvf", tmp+"/testdata/chart4.tgz", "--directory="+tmp+"/testdata", "chart4")
-	tarCmd.Run()
-	tarCmd = exec.Command("tar", "zcvf", tmp+"/testdata/chart5.tgz", "--directory="+tmp+"/testdata", "chart5")
-	tarCmd.Run()
-	tarCmd = exec.Command("tar", "zcvf", tmp+"/processfoldererror/chart6.tgz", "--directory="+tmp+"/testdata", "chart6")
-	tarCmd.Run()
-	cpCmd = exec.Command("cp", tmp+"/testdata/chart1.tgz", tmp+"/processfolder")
-	cpCmd.Run()
-	cpCmd = exec.Command("cp", tmp+"/testdata/chart2.tgz", tmp+"/processfolder")
-	cpCmd.Run()
-	cpCmd = exec.Command("cp", tmp+"/testdata/chart1.tgz", tmp+"/processfoldererror")
-	cpCmd.Run()
-}
+func prepareTmp() (string, error) {
+	dir, err := ioutil.TempDir("", "helmmirror")
+	if err != nil {
+		return "", err
+	}
+	testdataPath := path.Join(dir, "testdata")
+	processPath := path.Join(dir, "processfolder")
+	processTgzPath := path.Join(dir, "processtgz")
+	errorPath := path.Join(dir, "processfoldererror")
+	getPath := path.Join(dir, "get")
+	os.MkdirAll(processPath, 0777)
+	os.MkdirAll(processTgzPath, 0777)
+	os.MkdirAll(errorPath, 0777)
+	os.MkdirAll(getPath, 0777)
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
 
-func tearDownTmp() {
-	os.RemoveAll(tmp)
+	err = os.Symlink(path.Join(wd, "testdata"), testdataPath)
+	if err != nil {
+		return "", err
+	}
+	tarCmd := exec.Command("tar", "zcvf", path.Join(processTgzPath, "chart1.tgz"), "--directory="+testdataPath, "chart1")
+	tarCmd.Run()
+	tarCmd = exec.Command("tar", "zcvf", path.Join(processTgzPath, "chart2.tgz"), "--directory="+testdataPath, "chart2")
+	tarCmd.Run()
+	tarCmd = exec.Command("tar", "zcvf", path.Join(processTgzPath, "chart3.tgz"), "--directory="+testdataPath, "chart3")
+	tarCmd.Run()
+	tarCmd = exec.Command("tar", "zcvf", path.Join(processTgzPath, "chart4.tgz"), "--directory="+testdataPath, "chart4")
+	tarCmd.Run()
+	tarCmd = exec.Command("tar", "zcvf", path.Join(processTgzPath, "chart5.tgz"), "--directory="+testdataPath, "chart5")
+	tarCmd.Run()
+	tarCmd = exec.Command("tar", "zcvf", path.Join(errorPath, "chart6.tgz"), "--directory="+testdataPath, "chart6")
+	tarCmd.Run()
+
+	err = os.Symlink(path.Join(processTgzPath, "chart1.tgz"), path.Join(processPath, "chart1.tgz"))
+	if err != nil {
+		return "", err
+	}
+	err = os.Symlink(path.Join(processTgzPath, "chart2.tgz"), path.Join(processPath, "chart2.tgz"))
+	if err != nil {
+		return "", err
+	}
+	err = os.Symlink(path.Join(processTgzPath, "chart1.tgz"), path.Join(errorPath, "chart1.tgz"))
+	if err != nil {
+		return "", err
+	}
+	return dir, err
 }

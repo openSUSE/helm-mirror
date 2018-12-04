@@ -30,17 +30,18 @@ import (
 
 var (
 	//Verbose defines if the command is being run with verbose mode
-	Verbose  bool
-	folder   string
-	repoURL  *url.URL
-	flags    = log.Ldate | log.Lmicroseconds | log.Lshortfile
-	prefix   = "helm-mirror: "
-	logger   *log.Logger
-	username string
-	password string
-	caFile   string
-	certFile string
-	keyFile  string
+	Verbose    bool
+	folder     string
+	repoURL    *url.URL
+	flags      = log.Ldate | log.Lmicroseconds | log.Lshortfile
+	prefix     = "helm-mirror: "
+	logger     *log.Logger
+	username   string
+	password   string
+	caFile     string
+	certFile   string
+	keyFile    string
+	newRootURL string
 )
 
 const rootDesc = `Mirror Helm Charts from an index file into a local folder.
@@ -108,6 +109,7 @@ func init() {
 	rootCmd.Flags().StringVar(&caFile, "ca-file", "", "verify certificates of HTTPS-enabled servers using this CA bundle")
 	rootCmd.Flags().StringVar(&certFile, "cert-file", "", "identify HTTPS client using this SSL certificate file")
 	rootCmd.Flags().StringVar(&keyFile, "key-file", "", "identify HTTPS client using this SSL key file")
+	rootCmd.Flags().StringVar(&newRootURL, "new-root-url", "", "New root url of the chart repository (eg: `https://mirror.local.lan/charts`)")
 	rootCmd.AddCommand(newVersionCmd())
 }
 
@@ -149,6 +151,20 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	rootURL := &url.URL{}
+	if newRootURL != "" {
+		rootURL, err = url.Parse(newRootURL)
+		if err != nil {
+			logger.Printf("error: new-root-url not a valid URL: %s", err)
+			return err
+		}
+
+		if !strings.Contains(rootURL.Scheme, "http") {
+			logger.Printf("error: new-root-url not a valid URL protocol: `%s`", rootURL.Scheme)
+			return errors.New("error: new-root-url not a valid URL protocol")
+		}
+	}
+
 	config := repo.Entry{
 		Name:     folder,
 		URL:      repoURL.String(),
@@ -158,7 +174,7 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		CertFile: certFile,
 		KeyFile:  keyFile,
 	}
-	getService := service.NewGetService(config, Verbose, IgnoreErrors, logger)
+	getService := service.NewGetService(config, Verbose, IgnoreErrors, logger, rootURL.String())
 	err = getService.Get()
 	if err != nil {
 		return err
