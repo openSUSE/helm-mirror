@@ -13,6 +13,7 @@ mirror - mirror chart repositories
 [**--cert-file**]
 [**--ignore-errors**]
 [**--key-file**]
+[**--new-root-url**]
 [**--password**]
 [**--username**]
 [**--verbose**|**-v**]
@@ -76,6 +77,9 @@ into your destination folder.
 
 **--key-file**
   Identify HTTPS client using this SSL key file
+
+**--new-root-url**
+  New root url of the chart repository (eg: `https://mirror.local.lan/charts`)
 
 **--password**
   Chart repository password

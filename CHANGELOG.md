@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.2.0
+
+### Added
+
+- `mirror inspect-images` flag `--output` usage updated, flag `--file-name` no longer needed.
+  - `file=filename`
+  - `json=filename.json`
+  - `yaml=filename.yaml`
+  - `skopeo=filename.yaml`
+
+- `helm-mirror` has a new flag `--new-root-url` new root url of the chart repository.
+  (eg: `https://mirror.local.lan/charts`). This will allow users to set the name of
+  their mirror server when getting all the charts.
+
+- `downloaded-index.yaml` file changes it's name to `index.yaml` to allow users to host quickly
+  a mirror chart server.
+  
+
 ## v0.1.0
 
 ### Added
