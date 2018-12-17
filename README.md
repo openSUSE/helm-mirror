@@ -70,6 +70,7 @@ Flags:
       --ca-file string     verify certificates of HTTPS-enabled servers using this CA bundle
       --cert-file string   identify HTTPS client using this SSL certificate file
   -h, --help               help for mirror
+  -i, --ignore-errors      ignores errors while downloading or processing charts
       --key-file string    identify HTTPS client using this SSL key file
       --new-root-url       New root url of the chart repository (eg: `https://mirror.local.lan/charts`)
       --password string    chart repository password

@@ -28,7 +28,7 @@ option.
   Print usage statement.
 
 **-i, --ignore-errors**
-  Ignores errors whiles processing charts. (Exit Code: 2)
+  Ignores errors while downloading or processing charts.
 
 **-o, --output**
   choose an output for the list of images and specify the file name, if not specified 'images.out' will be the default.
