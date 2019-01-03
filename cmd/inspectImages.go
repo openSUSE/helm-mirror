@@ -27,10 +27,8 @@ import (
 )
 
 var (
-	//IgnoreErrors ignores errors in processing charts
-	IgnoreErrors bool
-	output       string
-	target       string
+	output string
+	target string
 )
 
 const imagesDesc = `Extract all the images of the Helm Chart or
@@ -78,7 +76,7 @@ var inspectImagesCmd = &cobra.Command{
 }
 
 func init() {
-	inspectImagesCmd.PersistentFlags().BoolVarP(&IgnoreErrors, "ignore-errors", "i", false, "ignores errors whiles processing charts. (Exit Code: 2)")
+
 	inspectImagesCmd.PersistentFlags().StringVarP(&output, "output", "o", "stdout", outputDesc)
 	rootCmd.AddCommand(inspectImagesCmd)
 }

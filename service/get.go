@@ -2,13 +2,11 @@ package service
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
-	"strings"
 
 	"k8s.io/helm/pkg/getter"
 	"k8s.io/helm/pkg/helm/environment"
@@ -64,19 +62,28 @@ func (g *GetService) Get() error {
 	}
 
 	charts := chartRepo.IndexFile.Entries
-	var errs []string
 	for n, c := range charts {
 		for _, cc := range c {
 			for _, u := range cc.URLs {
 				b, err := chartRepo.Client.Get(u)
 				if err != nil {
-					errs = append(errs, err.Error())
+					if g.ignoreErrors {
+						g.logger.Printf("WARNING: processing chart %s(%s) - %s", cc.Name, cc.Version, err)
+						continue
+					} else {
+						return err
+					}
 				}
 				chartFileName := fmt.Sprintf("%s-%s.tgz", n, cc.Version)
 				chartPath := path.Join(g.config.Name, chartFileName)
 				err = writeFile(chartPath, b.Bytes(), g.logger)
 				if err != nil {
-					errs = append(errs, err.Error())
+					if g.ignoreErrors {
+						g.logger.Printf("WARNING: saving chart %s(%s) - %s", cc.Name, cc.Version, err)
+						continue
+					} else {
+						return err
+					}
 				}
 			}
 		}
@@ -84,11 +91,7 @@ func (g *GetService) Get() error {
 
 	err = prepareIndexFile(g.config.Name, g.config.URL, g.newRootURL, g.logger)
 	if err != nil {
-		errs = append(errs, err.Error())
-	}
-
-	if len(errs) > 0 && !g.ignoreErrors {
-		return errors.New(strings.Join(errs, "\n"))
+		return err
 	}
 	return nil
 }

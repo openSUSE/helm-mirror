@@ -75,6 +75,9 @@ into your destination folder.
 **--cert-file**
   Identify HTTPS client using this SSL certificate file
 
+**-i, --ignore-errors**
+  Ignores errors while downloading or processing charts.
+
 **--key-file**
   Identify HTTPS client using this SSL key file
 
