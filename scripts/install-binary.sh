@@ -71,7 +71,7 @@ getDownloadURL() {
     DOWNLOAD_URL="https://codeload.github.com/$PROJECT_GH/tar.gz/$version"
   else
     # Use the GitHub API to find the download url for this project.
-    local url="https://github.com/repos/$PROJECT_GH/releases/latest"
+    local url="https://github.com/$PROJECT_GH/releases/latest"
     if type "curl" > /dev/null; then
       version=$(curl -s $url | grep -o -E 'v.+\"' | awk '{split($0,a,/"/); print a[1]}')
     elif type "wget" > /dev/null; then
