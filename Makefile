@@ -1,5 +1,5 @@
 # Go tools.
-GO ?= go
+GO ?= GO111MODULE=off go
 GO_MD2MAN ?= go-md2man
 
 # Paths.
