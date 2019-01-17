@@ -23,6 +23,9 @@ VERSION := $(shell sed -n -e 's/version:[ "]*\([^"]*\).*/\1/p' plugin.yaml)
 COMMIT_NO := $(shell git rev-parse HEAD 2> /dev/null || true)
 COMMIT := $(if $(shell git status --porcelain --untracked-files=no),"${COMMIT_NO}-dirty","${COMMIT_NO}")
 
+# Get current Version changelog
+CHANGE := $(shell sed -e '1,/v$(VERSION)/d;/v.*/Q' ./CHANGELOG.md)
+
 BUILD_FLAGS ?=
 
 BASE_FLAGS := ${BUILD_FLAGS} -tags "${BUILDTAGS}"
@@ -134,8 +137,10 @@ release: dist
 ifndef GITHUB_TOKEN
 	$(error GITHUB_TOKEN is undefined)
 endif
-	git push
-	github-release openSUSE/helm-mirror v$(VERSION) master "v$(VERSION)" "release/*"
+	github-release release -u openSUSE -r helm-mirror --tag v$(VERSION)  --name v$(VERSION) -s $(GITHUB_TOKEN) -d "$(CHANGE)"
+	github-release upload -u openSUSE -r helm-mirror --tag v$(VERSION)  --name helm-mirror-linux.tgz --file release/helm-mirror-linux.tgz -s $(GITHUB_TOKEN)
+	github-release upload -u openSUSE -r helm-mirror --tag v$(VERSION)  --name helm-mirror-macos.tgz --file release/helm-mirror-macos.tgz -s $(GITHUB_TOKEN)
+	github-release upload -u openSUSE -r helm-mirror --tag v$(VERSION)  --name helm-mirror-windows.tgz --file release/helm-mirror-windows.tgz -s $(GITHUB_TOKEN)
 
 MANPAGES_MD := $(wildcard doc/man/*.md)
 MANPAGES    := $(MANPAGES_MD:%.md=%)
