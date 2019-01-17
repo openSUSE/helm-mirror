@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.2.4
+
+- updated release steps
+- updated install script
+
 ## v0.2.3
 
 - fixes issue while getting the latest release

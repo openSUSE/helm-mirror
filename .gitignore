@@ -5,5 +5,8 @@ images
 .vscode
 /bin
 /release
+/build
 cover.out
 coverage.txt
+go.mod
+go.sum

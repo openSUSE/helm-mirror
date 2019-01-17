@@ -2,6 +2,8 @@
 
 # Shamelessly copied from https://github.com/databus23/helm-diff
 
+version=$1
+
 PROJECT_NAME="helm-mirror"
 PROJECT_GH="openSUSE/$PROJECT_NAME"
 
@@ -66,9 +68,8 @@ verifySupported() {
 
 # getDownloadURL checks the latest available version.
 getDownloadURL() {
-  local version=$(git -C $HELM_PLUGIN_PATH describe --tags --exact-match 2>/dev/null)
-  if [ -n "$version" ]; then
-    DOWNLOAD_URL="https://codeload.github.com/$PROJECT_GH/tar.gz/$version"
+  if [ -n "$version" ] && [ "$version" != 'master' ]; then
+    DOWNLOAD_URL="https://github.com/$PROJECT_GH/releases/download/$version/helm-mirror-$OS.tgz"
   else
     # Use the GitHub API to find the download url for this project.
     local url="https://github.com/$PROJECT_GH/releases/latest"
@@ -98,14 +99,16 @@ downloadFile() {
 # installs it.
 installFile() {
   HELM_TMP="/tmp/$PROJECT_NAME"
+  rm -rf "$HELM_TMP"
   mkdir -p "$HELM_TMP"
   tar xf "$PLUGIN_TMP_FILE" -C "$HELM_TMP" --strip-components=1
   HELM_TMP_BIN="$HELM_TMP/bin/mirror"
   echo "Preparing to install into ${HELM_PLUGIN_PATH}"
   mkdir -p "$HELM_PLUGIN_PATH/bin"
   pushd "$HELM_TMP"
-  make mirror
-  cp "$HELM_TMP_BIN" "$HELM_PLUGIN_PATH/bin"
+  # make mirror
+#  cp "$HELM_TMP_BIN" "$HELM_PLUGIN_PATH/bin"
+  cp -r $HELM_TMP/* "$HELM_PLUGIN_PATH"
   popd
 }
 
@@ -122,7 +125,7 @@ fail_trap() {
 # testVersion tests the installed client to make sure it is working.
 testVersion() {
   set +e
-  echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH/$PROJECT_NAME"
+  echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"
   $HELM_PLUGIN_PATH/bin/mirror version
   set -e
 }
