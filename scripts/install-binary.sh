@@ -78,7 +78,7 @@ getDownloadURL() {
     elif type "wget" > /dev/null; then
       version=$(wget -qSO- $url --max-redirect 0 2>&1 | grep Location: | awk '{split($0,a,/\//); print a[8]}')
     fi
-    DOWNLOAD_URL="https://codeload.github.com/$PROJECT_GH/tar.gz/$version"
+    DOWNLOAD_URL="https://github.com/$PROJECT_GH/releases/download/$version/helm-mirror-$OS.tgz"
   fi
   echo "using download url ${DOWNLOAD_URL}"
 }
