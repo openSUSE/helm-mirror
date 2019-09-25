@@ -7,7 +7,7 @@ import (
 
 	"github.com/containers/image/types"
 	"github.com/docker/distribution/reference"
-	yamlencoder "gopkg.in/yaml.v2"
+	yamlencoder "gopkg.in/yaml.v3"
 )
 
 type skopeo struct {

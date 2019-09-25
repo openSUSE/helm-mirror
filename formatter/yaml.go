@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	yamlencoder "gopkg.in/yaml.v2"
+	yamlencoder "gopkg.in/yaml.v3"
 )
 
 type yaml struct {
