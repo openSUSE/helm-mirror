@@ -29,7 +29,7 @@ func TestNewGetService(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 	config := repo.Entry{Name: dir, URL: "http://helmrepo"}
-	gService := &GetService{config: config, logger: fakeLogger, newRootURL: "https://newchartserver.com"}
+	gService := &GetService{config: config, logger: fakeLogger, newRootURL: "https://newchartserver.com", allVersions: false}
 	type args struct {
 		helmRepo     string
 		workspace    string
@@ -37,17 +37,18 @@ func TestNewGetService(t *testing.T) {
 		ignoreErrors bool
 		logger       *log.Logger
 		newRootURL   string
+		allVersions  bool
 	}
 	tests := []struct {
 		name string
 		args args
 		want GetServiceInterface
 	}{
-		{"1", args{"http://helmrepo", dir, false, false, fakeLogger, "https://newchartserver.com"}, gService},
+		{"1", args{"http://helmrepo", dir, false, false, fakeLogger, "https://newchartserver.com", false}, gService},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewGetService(config, tt.args.verbose, tt.args.ignoreErrors, tt.args.logger, tt.args.newRootURL); !reflect.DeepEqual(got, tt.want) {
+			if got := NewGetService(config, tt.args.verbose, tt.args.allVersions, tt.args.ignoreErrors, tt.args.logger, tt.args.newRootURL); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewGetService() = %v, want %v", got, tt.want)
 			}
 		})
@@ -67,17 +68,18 @@ func TestGetService_Get(t *testing.T) {
 		workDir      string
 		ignoreErrors bool
 		verbose      bool
+		allVersions  bool
 	}
 	tests := []struct {
 		name    string
 		fields  fields
 		wantErr bool
 	}{
-		{"1", fields{"", "", false, false}, true},
-		{"2", fields{"http://127.0.0.1", "", false, false}, true},
-		{"3", fields{"http://127.0.0.1:1793", "", false, false}, true},
-		{"4", fields{"http://127.0.0.1:1793", path.Join(dir, "get"), false, false}, true},
-		{"5", fields{"http://127.0.0.1:1793", path.Join(dir, "get"), true, false}, false},
+		{"1", fields{"", "", false, false, true}, true},
+		{"2", fields{"http://127.0.0.1", "", false, false, true}, true},
+		{"3", fields{"http://127.0.0.1:1793", "", false, false, true}, true},
+		{"4", fields{"http://127.0.0.1:1793", path.Join(dir, "get"), false, false, true}, true},
+		{"5", fields{"http://127.0.0.1:1793", path.Join(dir, "get"), true, false, true}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -86,6 +88,7 @@ func TestGetService_Get(t *testing.T) {
 				logger:       fakeLogger,
 				ignoreErrors: tt.fields.ignoreErrors,
 				verbose:      tt.fields.verbose,
+				allVersions:  tt.fields.allVersions,
 			}
 			if err := g.Get(); (err != nil) != tt.wantErr {
 				t.Errorf("GetService.Get() error = %v, wantErr %v", err, tt.wantErr)

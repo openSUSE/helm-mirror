@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/openSUSE/helm-mirror/formatter"
+	"github.com/pkg/errors"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/proto/hapi/chart"
@@ -62,47 +63,50 @@ func (i *ImagesService) Images() error {
 		i.logger.Printf("error: procesing target %s: %s", i.target, err)
 		return err
 	}
-
 	err = i.formatter.Output(i.buffer)
 	if err != nil {
 		i.logger.Printf("writing output: %s", err)
 		return err
-	}
-	if i.exitWithErrors {
-		//TODO figure out how to return a specific type of error to exit woth exit code 2
-		//defer os.Exit(2)
-		return nil
 	}
 	return nil
 }
 
 func (i *ImagesService) processDirectory(target string) error {
 	hasTgzCharts := false
-	e := i.processTarget(target)
-	err := filepath.Walk(target, func(dir string, info os.FileInfo, err error) error {
-		if err != nil {
-			i.logger.Printf("error: cannot access a dir %q: %v\n", dir, err)
-			return err
-		}
-		if !info.IsDir() && strings.Contains(info.Name(), ".tgz") {
-			hasTgzCharts = true
-			err := i.processTarget(path.Join(target, info.Name()))
-			if err != nil && i.ignoreErrors {
-				i.exitWithErrors = true
-			} else if err != nil {
-				i.logger.Printf("error: cannot load chart: %s", err)
-				return err
-			}
-		}
-		return nil
-	})
+	fi, err := os.Stat(i.target)
 	if err != nil {
-		i.logger.Printf("error walking the path %q: %v\n", target, err)
+		i.logger.Printf("error: cannot read target: %s", i.target)
 		return err
 	}
-
+	if !fi.IsDir() {
+		return errors.New("error: inspectImages: processDirectory: target not a directory")
+	}
+	e := i.processTarget(target)
+	if e != nil {
+		err := filepath.Walk(target, func(dir string, info os.FileInfo, err error) error {
+			if err != nil {
+				i.logger.Printf("error: cannot access a dir %q: %v\n", dir, err)
+				return err
+			}
+			if !info.IsDir() && strings.Contains(info.Name(), ".tgz") {
+				hasTgzCharts = true
+				err := i.processTarget(path.Join(target, info.Name()))
+				if err != nil && i.ignoreErrors {
+					i.exitWithErrors = true
+				} else if err != nil {
+					i.logger.Printf("error: cannot load chart: %s", err)
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			i.logger.Printf("error walking the path %q: %v\n", target, err)
+			return err
+		}
+	}
 	if e != nil && !hasTgzCharts {
-		i.logger.Printf("error: cannot load chart: %s", err)
+		i.logger.Printf("error: cannot load chart: %s", e)
 		return e
 	}
 	return nil
@@ -122,7 +126,8 @@ func (i *ImagesService) processTarget(target string) error {
 		KubeVersion:   chartutil.DefaultKubeVersion,
 		TillerVersion: tversion.GetVersionProto(),
 	}
-	vals, err := chartutil.ToRenderValuesCaps(c, &chart.Config{}, renderutil.Options{}.ReleaseOptions, caps)
+	chartConfig := &chart.Config{}
+	vals, err := chartutil.ToRenderValuesCaps(c, chartConfig, renderutil.Options{}.ReleaseOptions, caps)
 	if err != nil {
 		i.logger.Printf("error: cannot render values: %s", err)
 		return err

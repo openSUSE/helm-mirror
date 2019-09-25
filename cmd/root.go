@@ -33,17 +33,19 @@ var (
 	Verbose bool
 	//IgnoreErrors ignores errors in processing charts
 	IgnoreErrors bool
-	folder       string
-	repoURL      *url.URL
-	flags        = log.Ldate | log.Lmicroseconds | log.Lshortfile
-	prefix       = "helm-mirror: "
-	logger       *log.Logger
-	username     string
-	password     string
-	caFile       string
-	certFile     string
-	keyFile      string
-	newRootURL   string
+	//AllVersions gets all the versions of the charts when true, false by default
+	AllVersions bool
+	folder      string
+	repoURL     *url.URL
+	flags       = log.Ldate | log.Lmicroseconds | log.Lshortfile
+	prefix      = "helm-mirror: "
+	logger      *log.Logger
+	username    string
+	password    string
+	caFile      string
+	certFile    string
+	keyFile     string
+	newRootURL  string
 )
 
 const rootDesc = `Mirror Helm Charts from an index file into a local folder.
@@ -106,6 +108,7 @@ func init() {
 	logger = log.New(os.Stdout, prefix, flags)
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&IgnoreErrors, "ignore-errors", "i", false, "ignores errors while downloading or processing charts")
+	rootCmd.PersistentFlags().BoolVarP(&AllVersions, "all-versions", "a", false, "when given gets all the versions of the charts in the chart repository")
 	rootCmd.Flags().StringVar(&username, "username", "", "chart repository username")
 	rootCmd.Flags().StringVar(&password, "password", "", "chart repository password")
 	rootCmd.Flags().StringVar(&caFile, "ca-file", "", "verify certificates of HTTPS-enabled servers using this CA bundle")
@@ -176,7 +179,7 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		CertFile: certFile,
 		KeyFile:  keyFile,
 	}
-	getService := service.NewGetService(config, Verbose, IgnoreErrors, logger, rootURL.String())
+	getService := service.NewGetService(config, AllVersions, Verbose, IgnoreErrors, logger, rootURL.String())
 	err = getService.Get()
 	if err != nil {
 		return err
