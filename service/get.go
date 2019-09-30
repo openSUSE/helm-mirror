@@ -32,10 +32,12 @@ type GetService struct {
 	logger       *log.Logger
 	newRootURL   string
 	allVersions  bool
+	chartName    string
+	chartVersion string
 }
 
 // NewGetService return a new instace of GetService
-func NewGetService(config repo.Entry, allVersions bool, verbose bool, ignoreErrors bool, logger *log.Logger, newRootURL string) GetServiceInterface {
+func NewGetService(config repo.Entry, allVersions bool, verbose bool, ignoreErrors bool, logger *log.Logger, newRootURL string, chartName string, chartVersion string) GetServiceInterface {
 	return &GetService{
 		config:       config,
 		verbose:      verbose,
@@ -43,6 +45,8 @@ func NewGetService(config repo.Entry, allVersions bool, verbose bool, ignoreErro
 		logger:       logger,
 		newRootURL:   newRootURL,
 		allVersions:  allVersions,
+		chartName:    chartName,
+		chartVersion: chartVersion,
 	}
 }
 
@@ -65,14 +69,20 @@ func (g *GetService) Get() error {
 	}
 
 	index := search.NewIndex()
-	index.AddRepo("suse", chartRepo.IndexFile, g.allVersions)
-
-	res, err := index.Search("suse", 2, false)
+	index.AddRepo(chartRepo.Config.Name, chartRepo.IndexFile, (g.allVersions || g.chartVersion != ""))
+	rexp := fmt.Sprintf("^.*%s.*", g.chartName)
+	res, err := index.Search(rexp, 1, true)
 	if err != nil {
 		return err
 	}
 
 	for _, r := range res {
+		if g.chartName != "" && r.Chart.Name != g.chartName {
+			continue
+		}
+		if g.chartVersion != "" && r.Chart.Version != g.chartVersion {
+			continue
+		}
 		for _, u := range r.Chart.URLs {
 			b, err := chartRepo.Client.Get(u)
 			if err != nil {
@@ -85,35 +95,31 @@ func (g *GetService) Get() error {
 			}
 			chartFileName := fmt.Sprintf("%s-%s.tgz", r.Chart.Name, r.Chart.Version)
 			chartPath := path.Join(g.config.Name, chartFileName)
-			err = writeFile(chartPath, b.Bytes(), g.logger)
+			err = writeFile(chartPath, b.Bytes(), g.logger, g.ignoreErrors)
 			if err != nil {
-				if g.ignoreErrors {
-					g.logger.Printf("WARNING: saving chart %s(%s) - %s", r.Name, r.Chart.Version, err)
-					continue
-				} else {
-					return err
-				}
+				return err
 			}
 		}
 	}
 
-	err = prepareIndexFile(g.config.Name, g.config.URL, g.newRootURL, g.logger)
+	err = prepareIndexFile(g.config.Name, g.config.URL, g.newRootURL, g.logger, g.ignoreErrors)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func writeFile(name string, content []byte, log *log.Logger) error {
+func writeFile(name string, content []byte, log *log.Logger, ignoreErrors bool) error {
 	err := ioutil.WriteFile(name, content, 0666)
-	if err != nil {
+	if ignoreErrors {
 		log.Printf("cannot write files %s: %s", name, err)
+	} else {
 		return err
 	}
 	return nil
 }
 
-func prepareIndexFile(folder string, repoURL string, newRootURL string, log *log.Logger) error {
+func prepareIndexFile(folder string, repoURL string, newRootURL string, log *log.Logger, ignoreErrors bool) error {
 	downloadedPath := path.Join(folder, downloadedFileName)
 	indexPath := path.Join(folder, indexFileName)
 	if newRootURL != "" {
@@ -122,7 +128,10 @@ func prepareIndexFile(folder string, repoURL string, newRootURL string, log *log
 			return err
 		}
 		content := bytes.Replace(indexContent, []byte(repoURL), []byte(newRootURL), -1)
-		writeFile(downloadedPath, []byte(content), log)
+		err = writeFile(downloadedPath, []byte(content), log, ignoreErrors)
+		if err != nil {
+			return nil
+		}
 	}
 	return os.Rename(downloadedPath, indexPath)
 }
