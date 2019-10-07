@@ -33,6 +33,10 @@ var (
 	Verbose bool
 	//IgnoreErrors ignores errors in processing charts
 	IgnoreErrors bool
+	//AllVersions gets all the versions of the charts when true, false by default
+	AllVersions  bool
+	chartName    string
+	chartVersion string
 	folder       string
 	repoURL      *url.URL
 	flags        = log.Ldate | log.Lmicroseconds | log.Lshortfile
@@ -106,6 +110,9 @@ func init() {
 	logger = log.New(os.Stdout, prefix, flags)
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&IgnoreErrors, "ignore-errors", "i", false, "ignores errors while downloading or processing charts")
+	rootCmd.PersistentFlags().BoolVarP(&AllVersions, "all-versions", "a", false, "gets all the versions of the charts in the chart repository")
+	rootCmd.Flags().StringVar(&chartName, "chart-name", "", "name of the chart that gets mirrored")
+	rootCmd.Flags().StringVar(&chartVersion, "chart-version", "", "specific version of the chart that is going to be mirrored")
 	rootCmd.Flags().StringVar(&username, "username", "", "chart repository username")
 	rootCmd.Flags().StringVar(&password, "password", "", "chart repository password")
 	rootCmd.Flags().StringVar(&caFile, "ca-file", "", "verify certificates of HTTPS-enabled servers using this CA bundle")
@@ -167,6 +174,11 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	if chartVersion != "" && chartName == "" {
+		logger.Printf("error: chart Version depends on a chart name, please specify one")
+		return errors.New("error: chart Version depends on a chart name, please specify one")
+	}
+
 	config := repo.Entry{
 		Name:     folder,
 		URL:      repoURL.String(),
@@ -176,7 +188,7 @@ func runRoot(cmd *cobra.Command, args []string) error {
 		CertFile: certFile,
 		KeyFile:  keyFile,
 	}
-	getService := service.NewGetService(config, Verbose, IgnoreErrors, logger, rootURL.String())
+	getService := service.NewGetService(config, AllVersions, Verbose, IgnoreErrors, logger, rootURL.String(), chartName, chartVersion)
 	err = getService.Get()
 	if err != nil {
 		return err

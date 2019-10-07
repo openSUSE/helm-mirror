@@ -54,27 +54,33 @@ func Test_runRoot(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 	svr := fixtures.StartHTTPServer()
-	fixtures.WaitForServer(svr.Addr)
+	defer svr.Shutdown(nil)
+	fixtures.WaitForServer("http://127.0.0.1:1793/alive")
 	type args struct {
 		cmd          *cobra.Command
 		args         []string
 		newRootURL   string
 		ignoreErrors bool
+		allVersions  bool
+		chartName    string
+		chartVersion string
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"1", args{&cobra.Command{}, []string{"http://test", path.Join("/mr", "mzxyptlk")}, "", false}, true},
-		{"2", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", dir}, "", true}, false},
-		{"3", args{&cobra.Command{}, []string{"%", dir}, "", false}, true},
-		{"4", args{&cobra.Command{}, []string{"http://test", dir}, "%", false}, true},
-		{"5", args{&cobra.Command{}, []string{"http://test", dir}, "ftp://test", false}, true},
-		{"6", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", dir}, "https://test/com/charts", true}, false},
-		{"7", args{&cobra.Command{}, []string{"http://127.0.0.1:1111", dir}, "https://test/com/charts", false}, true},
-		{"8", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", dir, "--ignore-errors"}, "https://test/com/charts", true}, false},
-		{"9", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", dir}, "", false}, true},
+		{"1", args{&cobra.Command{}, []string{"http://test", path.Join("/mr", "mzxyptlk")}, "", false, true, "", ""}, true},
+		{"2", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", dir}, "", true, true, "", ""}, false},
+		{"3", args{&cobra.Command{}, []string{"%", dir}, "", false, true, "", ""}, true},
+		{"4", args{&cobra.Command{}, []string{"http://test", dir}, "%", false, true, "", ""}, true},
+		{"5", args{&cobra.Command{}, []string{"http://test", dir}, "ftp://test", false, true, "", ""}, true},
+		{"6", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", dir}, "https://test/com/charts", true, true, "", ""}, false},
+		{"7", args{&cobra.Command{}, []string{"http://127.0.0.1:1111", dir}, "https://test/com/charts", false, true, "", ""}, true},
+		{"8", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", dir}, "https://test/com/charts", true, true, "", ""}, false},
+		{"9", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", dir}, "", false, true, "", ""}, true},
+		{"10", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", dir}, "", true, false, "", ""}, false},
+		{"11", args{&cobra.Command{}, []string{"http://127.0.0.1:1793", dir}, "", true, false, "", "1.0.0"}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -82,12 +88,12 @@ func Test_runRoot(t *testing.T) {
 			fmt.Printf("%v\n", tt.args.args[1])
 			newRootURL = tt.args.newRootURL
 			IgnoreErrors = tt.args.ignoreErrors
+			AllVersions = tt.args.allVersions
+			chartName = tt.args.chartName
+			chartVersion = tt.args.chartVersion
 			if err := runRoot(tt.args.cmd, tt.args.args); (err != nil) != tt.wantErr {
 				t.Errorf("runRoot() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
-	}
-	if err := svr.Shutdown(nil); err != nil {
-		t.Errorf("error stoping down web server")
 	}
 }

@@ -224,9 +224,10 @@
   version = "kubernetes-1.14.1"
 
 [[projects]]
-  digest = "1:020588175b9e5eee86450a8ac85af2bff12169716dc3dcbfbde65f45a98d35b9"
+  digest = "1:9f4d75e17d60644ecd85e7886c1eb9375db2f7d2b9e500211e8c56f32e054431"
   name = "k8s.io/helm"
   packages = [
+    "cmd/helm/search",
     "pkg/chartutil",
     "pkg/engine",
     "pkg/getter",
@@ -257,6 +258,7 @@
     "github.com/pkg/errors",
     "github.com/spf13/cobra",
     "gopkg.in/yaml.v3",
+    "k8s.io/helm/cmd/helm/search",
     "k8s.io/helm/pkg/chartutil",
     "k8s.io/helm/pkg/engine",
     "k8s.io/helm/pkg/getter",

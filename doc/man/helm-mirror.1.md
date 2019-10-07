@@ -1,16 +1,18 @@
-% mirror(1) # mirror - Mirror chart repositories
+% helm-mirror(1) # helm-mirror - Mirror chart repositories
 % SUSE LLC
 % OCTOBER 2018
 # NAME
-mirror - mirror chart repositories
+helm-mirror - helm-mirror chart repositories
 
 # SYNOPSIS
-**mirror**
+**helm-mirror**
 [**--help**|**-h**]
 [**version**]
 [**inspect-images**]
 [**--ca-file**]
 [**--cert-file**]
+[**--chart-name**]
+[**--chart-version**]
 [**--ignore-errors**]
 [**--key-file**]
 [**--new-root-url**]
@@ -20,15 +22,15 @@ mirror - mirror chart repositories
 *command* [*args*]
 
 # DESCRIPTION
-**mirror** is a [Helm][1] plugin that allows the mirroring of a Chart
+**helm-mirror** is a [Helm][1] plugin that allows the mirroring of a Chart
 repository, with the index file and all referenced charts.
 
-**mirror** will allow users to pass through the same options
+**helm-mirror** will allow users to pass through the same options
 as [Helm][1] does to connect to the repository and download the charts.
 
-**mirror** will also allow users to inspect the charts and extract from them the
+**helm-mirror** will also allow users to inspect the charts and extract from them the
 container images that they use. This will be allowed by the sub-command
-**mirror-inspect-images**(1).
+**helm-mirror-inspect-images**(1).
 
 The index file is a yaml that contains a list of charts in this format.
 Example:
@@ -75,8 +77,14 @@ into your destination folder.
 **--cert-file**
   Identify HTTPS client using this SSL certificate file
 
+**--chart-name**
+  Name of the desired chart to download
+
+**--chart-version**
+  Version of the desired chart to download, needs the `--chart-name` option
+
 **-i, --ignore-errors**
-  Ignores errors while downloading or processing charts.
+  Ignores errors while downloading or processing charts
 
 **--key-file**
   Identify HTTPS client using this SSL key file
@@ -93,26 +101,40 @@ into your destination folder.
 # COMMANDS
 
 **inspect-images**
-  Extract the images from the a target. See **mirror-inspect-images**(1) for more detailed usage
+  Extract the images from the a target. See **helm-mirror-inspect-images**(1) for more detailed usage
   information.
 
 **version**
-  Print current version of software. See **mirror-version**(1) for more detailed
+  Print current version of software. See **helm-mirror-version**(1) for more detailed
   usage information.
 
 **help**
-  Print usage statements. See **mirror-help**(1)
+  Print usage statements. See **helm-mirror-help**(1)
   for more detailed usage information.
 
-# EXAMPLE
+# EXAMPLES
 This will read the given chart repository and download all the Charts that are found into the
 given target folder. target folder has to be always an absolute path.
 
-`% helm mirror https://yourorg.com/charts /yourorg/charts`
+`% helm-mirror https://yourorg.com/charts /yourorg/charts`
+
+This will download all the charts and all the available versions
+of the charts.
+
+`% helm-mirror https://yourorg.com/charts /yourorg/charts --all-charts`
+
+This will download the latest version of the chart `nginx`.
+
+`% helm-mirror https://yourorg.com/charts /yourorg/charts --chart-name nginx`
+
+This will download the version `2.14.3` of the chart `nginx`.
+
+`% helm-mirror https://yourorg.com/charts /yourorg/charts --chart-name nginx --chart-version 2.14.3`
+
 
 # SEE ALSO
-**mirror-inspect-images**(1),
-**mirror-help**(1),
-**mirror-version**(1)
+**helm-mirror-inspect-images**(1),
+**helm-mirror-help**(1),
+**helm-mirror-version**(1)
 
 [1]: https://docs.helm.sh

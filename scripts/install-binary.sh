@@ -102,12 +102,9 @@ installFile() {
   rm -rf "$HELM_TMP"
   mkdir -p "$HELM_TMP"
   tar xf "$PLUGIN_TMP_FILE" -C "$HELM_TMP" --strip-components=1
-  HELM_TMP_BIN="$HELM_TMP/bin/mirror"
   echo "Preparing to install into ${HELM_PLUGIN_PATH}"
   mkdir -p "$HELM_PLUGIN_PATH/bin"
   pushd "$HELM_TMP"
-  # make mirror
-#  cp "$HELM_TMP_BIN" "$HELM_PLUGIN_PATH/bin"
   cp -r $HELM_TMP/* "$HELM_PLUGIN_PATH"
   popd
 }
@@ -126,7 +123,7 @@ fail_trap() {
 testVersion() {
   set +e
   echo "$PROJECT_NAME installed into $HELM_PLUGIN_PATH"
-  $HELM_PLUGIN_PATH/bin/mirror version
+  $HELM_PLUGIN_PATH/bin/helm-mirror version
   set -e
 }
 

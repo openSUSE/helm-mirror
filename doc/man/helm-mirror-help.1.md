@@ -1,14 +1,14 @@
-% mirror-help(1) # mirror help - Displays the usage statement
+% helm-mirror-help(1) # helm-mirror help - Displays the usage statement
 % SUSE LLC
 % OCTOBER 2018
 # NAME
-mirror help - Displays the usage statement
+helm-mirror help - Displays the usage statement
 
 # SYNOPSIS
-**mirror help**
+**helm-mirror help**
 
 # DESCRIPTION
-**mirror** Displays the usage statement.
+**helm-mirror** Displays the usage statement.
 
 # GLOBAL OPTIONS
 
@@ -19,6 +19,6 @@ mirror help - Displays the usage statement
   Verbose output
 
 # SEE ALSO
-**mirror**(1),
-**mirror-inspect-images**(1),
-**mirror-version**(1)
+**helm-mirror**(1),
+**helm-mirror-inspect-images**(1),
+**helm-mirror-version**(1)

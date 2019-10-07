@@ -1,5 +1,5 @@
 # Go tools.
-GO ?= GO111MODULE=off go
+GO ?= go
 GO_MD2MAN ?= go-md2man
 
 # Paths.
@@ -44,10 +44,10 @@ GO_SRC = $(shell find . -name \*.go)
 # NOTE: If you change these make sure you also update local-validate-build.
 
 mirror: $(GO_SRC)
-	$(GO) build ${DYN_BUILD_FLAGS} -o $(BUILD_DIR)/$@ ${CMD}
+	$(GO) build ${DYN_BUILD_FLAGS} -o $(BUILD_DIR)/helm-mirror ${CMD}
 
 mirror.static: $(GO_SRC)
-	env CGO_ENABLED=0 $(GO) build ${STATIC_BUILD_FLAGS} -o $(BUILD_DIR)/$@ ${CMD}
+	env CGO_ENABLED=0 $(GO) build ${STATIC_BUILD_FLAGS} -o $(BUILD_DIR)/helm-mirror ${CMD}
 
 install: $(GO_SRC)
 	$(GO) install -v ${DYN_BUILD_FLAGS} ${CMD}
@@ -125,12 +125,12 @@ dist:
 	rm -rf build/mirror/* release/*
 	mkdir -p build/mirror/bin release/
 	cp README.md LICENSE plugin.yaml build/mirror
-	GOOS=linux GOARCH=amd64 go build -o build/mirror/bin/mirror -ldflags="$(BASE_LDFLAGS)"
+	GOOS=linux GOARCH=amd64 go build -o build/mirror/bin/helm-mirror -ldflags="$(BASE_LDFLAGS)"
 	tar -C build/ -zcvf $(CURDIR)/release/helm-mirror-linux.tgz mirror/
-	GOOS=darwin GOARCH=amd64 go build -o build/mirror/bin/mirror -ldflags="$(BASE_LDFLAGS)"
+	GOOS=darwin GOARCH=amd64 go build -o build/mirror/bin/helm-mirror -ldflags="$(BASE_LDFLAGS)"
 	tar -C build/ -zcvf $(CURDIR)/release/helm-mirror-macos.tgz mirror/
-	rm build/mirror/bin/mirror
-	GOOS=windows GOARCH=amd64 go build -o build/mirror/bin/mirror.exe -ldflags="$(BASE_LDFLAGS)"
+	rm build/mirror/bin/helm-mirror
+	GOOS=windows GOARCH=amd64 go build -o build/mirror/bin/helm-mirror.exe -ldflags="$(BASE_LDFLAGS)"
 	tar -C build/ -zcvf $(CURDIR)/release/helm-mirror-windows.tgz mirror/
 
 release: dist

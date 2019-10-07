@@ -1,14 +1,14 @@
-FROM opensuse/amd64:42.3
+FROM opensuse/leap:15.1
 
 LABEL Maintainer="SUSE Containers Team <containers@suse.com>"
 
-RUN zypper -n up
 RUN zypper -n in \
 		git \
-		go \
+		go1.12 \
 		golang-github-cpuguy83-go-md2man \
 		make \
-		tar
+		tar \
+		gzip
 
 ENV GOPATH /go
 ENV PATH $GOPATH/bin:$PATH
