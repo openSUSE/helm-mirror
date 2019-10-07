@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.3.0
+
+- New features: get latest and specific charts
+  - Getting charts now only downloads the altest versions of the charts.
+  - The --all-versions flags allows to download all versions of the charts.
+  - The flags --chart-name and --chart-version allow the user to only get the desired chart.
+
 ## v0.2.4
 
 - updated release steps
