@@ -8,6 +8,4 @@ images
 /build
 cover.out
 coverage.txt
-go.mod
-go.sum
 sync.yaml
