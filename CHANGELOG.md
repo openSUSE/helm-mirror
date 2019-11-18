@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.3.1
+
+- Update to use go modules
+- Update to use hel 2.16.1 to fix CVE-2019-18658
+
+bsc#1156646
+
 ## v0.3.0
 
 - New features: get latest and specific charts
