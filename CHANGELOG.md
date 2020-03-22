@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.3.2
+
+- Support relative chart URL in `index.yaml` (such as those created by Harbor).
+
 ## v0.3.1
 
 - Update to use go modules

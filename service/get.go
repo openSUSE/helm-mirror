@@ -17,6 +17,7 @@ import (
 const (
 	downloadedFileName = "downloaded-index.yaml"
 	indexFileName      = "index.yaml"
+	dirSep             = "/"
 )
 
 // GetServiceInterface defines a Get service
@@ -84,6 +85,14 @@ func (g *GetService) Get() error {
 			continue
 		}
 		for _, u := range r.Chart.URLs {
+			chartURL, err := url.Parse(u)
+			if err != nil {
+				return fmt.Errorf("Invalid chart URL %q: %w", u, err)
+			}
+			// relative chart URL
+			if chartURL.Scheme == "" {
+				u = strings.TrimRight(g.config.URL, dirSep) + dirSep + u
+			}
 			b, err := chartRepo.Client.Get(u)
 			if err != nil {
 				if g.ignoreErrors {
