@@ -1,6 +1,6 @@
 name: "mirror"
 # plugin
-version: "0.3.1"
+version: "0.3.2"
 usage: "Mirror Helm Charts from a repository into a local folder."
 description: "Mirror Helm Charts from a repository into a local folder."
 useTunnel: true
