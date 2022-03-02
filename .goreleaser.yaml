@@ -1,0 +1,9 @@
+project_name: helm-mirror
+builds:
+  - env: [CGO_ENABLED=0]
+    binary: helm-mirror
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64

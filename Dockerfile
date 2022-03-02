@@ -1,20 +1,16 @@
-FROM opensuse/leap:15.1
+# Use distroless as minimal base image to package the manager binary
+# Refer to https://github.com/GoogleContainerTools/distroless for more details
 
-LABEL Maintainer="SUSE Containers Team <containers@suse.com>"
+FROM alpine as builder
+ARG TARGETPLATFORM
 
-RUN zypper -n in \
-		git \
-		go1.12 \
-		golang-github-cpuguy83-go-md2man \
-		make \
-		tar \
-		gzip
+WORKDIR /
 
-ENV GOPATH /go
-ENV PATH $GOPATH/bin:$PATH
-RUN go get -u golang.org/x/lint/golint && \
-	go get -u github.com/vbatts/git-validation && type git-validation
+RUN --mount=target=/build tar xf /build/dist/helm-mirror_*_$(echo ${TARGETPLATFORM} | tr '/' '_' | sed -e 's/arm_/arm/').tar.gz
+RUN cp helm-mirror /usr/bin/helm-mirror
 
-VOLUME ["/go/src/github.com/openSUSE/helm-mirror"]
-WORKDIR /go/src/github.com/openSUSE/helm-mirror
-COPY . /go/src/github.com/openSUSE/helm-mirror
+FROM gcr.io/distroless/static:nonroot
+COPY --from=builder /usr/bin/helm-mirror /usr/bin/helm-mirror
+USER 65532:65532
+
+ENTRYPOINT ["/usr/bin/helm-mirror"]
