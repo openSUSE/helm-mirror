@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/sprig v2.19.0+incompatible // indirect
 	github.com/containers/image v3.0.2+incompatible
 	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
-	github.com/docker/distribution v2.7.1+incompatible
+	github.com/docker/distribution v2.8.2+incompatible
 	github.com/ghodss/yaml v0.0.0-20180820084758-c7ce16629ff4 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/golang/protobuf v1.2.0 // indirect
