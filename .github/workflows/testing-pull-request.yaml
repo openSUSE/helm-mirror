@@ -23,7 +23,7 @@ jobs:
           echo "tag=$GITHUB_SHA" >> $GITHUB_OUTPUT
       - name: Replace version in plugin.yaml
         run: |
-          yq e ".version = \"${{ steps.vars.outputs.tag }}\"" -i plugin.yaml
+          yq e ".version = \"${{ steps.vars.outputs.tag }}\"" plugin.yaml.tpl > plugin.yaml
       - name: Assert with yq that the tag has changed
         run: |
           yq e ".version" plugin.yaml | grep -q "$GITHUB_SHA"

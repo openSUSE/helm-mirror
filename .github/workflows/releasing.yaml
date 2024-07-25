@@ -34,7 +34,7 @@ jobs:
           echo "tag=$(git describe --tags --abbrev=0 || echo "0.0.0-devel")" >> $GITHUB_OUTPUT
       - name: Replace version in plugin.yaml
         run: |
-          yq e ".version = \"${{ steps.vars.outputs.tag }}\"" -i plugin.yaml
+          yq e ".version = \"${{ steps.vars.outputs.tag }}\"" plugin.yaml.tpl > plugin.yaml
       - name: Release application to Github
         uses: goreleaser/goreleaser-action@v6
         with:
